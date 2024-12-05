@@ -72,6 +72,9 @@ func StartTracing(cfg TracerConfig, serviceName string) error {
 		otlploghttp.WithHeaders(headers),
 		otlploghttp.WithInsecure(),
 	)
+	if err != nil {
+		return errors.InternalServer.Wrap(err)
+	}
 
 	// Create the logger provider
 	lp := log.NewLoggerProvider(

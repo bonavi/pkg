@@ -9,8 +9,10 @@ import (
 	"github.com/mailru/easyjson"
 
 	"pkg/contextKeys"
+	"pkg/errors"
 	"pkg/log/buffer/buffer"
 	"pkg/log/model"
+	"pkg/maps"
 	"pkg/stackTrace"
 )
 
@@ -74,17 +76,17 @@ func (h *JSONHandler) handle(ctx context.Context, level LogLevel, log any, opts 
 	case error: // Если передана ошибка
 
 		//// Кастуем ее
-		//customErr := errors.CastError(v)
-		//
-		//// Собираем лог с дополнением данных из ошибки
-		//logStruct = jsonLog{
-		//	Level:      level.String(),
-		//	Message:    customErr.Error(),
-		//	StackTrace: customErr.StackTrace,
-		//	Params:     maps.Join(logOpts.params, customErr.Params),
-		//	UserInfo:   userInfo,
-		//	SystemInfo: logger.systemInfo,
-		//}
+		customErr := errors.CastError(v)
+
+		// Собираем лог с дополнением данных из ошибки
+		logStruct = jsonLog{
+			Level:      level.String(),
+			Message:    customErr.Error(),
+			StackTrace: customErr.StackTrace,
+			Params:     maps.Join(logOpts.params, customErr.Params),
+			UserInfo:   userInfo,
+			SystemInfo: logger.systemInfo,
+		}
 
 	default: // Если передан неизвестный тип данных
 
