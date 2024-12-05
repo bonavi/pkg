@@ -7,6 +7,7 @@ import (
 	"os"
 	"slices"
 
+	"pkg/errors"
 	"pkg/log/buffer/buffer"
 	"pkg/maps"
 	"pkg/stackTrace"
@@ -64,13 +65,13 @@ func (h *ConsoleHandler) handle(_ context.Context, level LogLevel, log any, opts
 	var path string
 
 	// Если лог является ошибкой
-	if _, ok := log.(error); ok {
+	if v, ok := log.(error); ok {
 
 		//// Получаем путь из ошибки
-		//customErr := errors.CastError(v)
-		//if len(customErr.StackTrace) > 0 {
-		//	path = customErr.StackTrace[0]
-		//}
+		customErr := errors.CastError(v)
+		if len(customErr.StackTrace) > 0 {
+			path = customErr.StackTrace[0]
+		}
 
 	} else { // Если лог другого типа
 
@@ -107,14 +108,14 @@ func (h *ConsoleHandler) handle(_ context.Context, level LogLevel, log any, opts
 			Params:  logOpts.params,
 		}
 
-	//case error: // Если передана ошибка
-	//	customErr := errors.CastError(v)
-	//	consoleLogStruct = consoleLog{
-	//		Level:   level,
-	//		Message: customErr.Error(),
-	//		Path:    path,
-	//		Params:  maps.Join(logOpts.params, customErr.Params),
-	//	}
+	case error: // Если передана ошибка
+		customErr := errors.CastError(v)
+		consoleLogStruct = consoleLog{
+			Level:   level,
+			Message: customErr.Error(),
+			Path:    path,
+			Params:  maps.Join(logOpts.params, customErr.Params),
+		}
 
 	default: // Если передан неизвестный тип данных
 

@@ -18,11 +18,17 @@ import (
 )
 
 type TracerConfig struct {
+	IsEnabled       bool   `env:"OTLP_IS_ENABLED"`
 	OtlHTTPEndpoint string `env:"OTLP_HTTP_ENDPOINT"`
 	OtlInsecure     bool   `env:"OTLP_INSECURE"`
 }
 
 func StartTracing(cfg TracerConfig, serviceName string) error {
+
+	if !cfg.IsEnabled {
+		return nil
+	}
+
 	headers := map[string]string{
 		"content-type": "application/json",
 	}
