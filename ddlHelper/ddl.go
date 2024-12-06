@@ -24,7 +24,12 @@ func Coalesce(column, defaultValue string) string {
 }
 
 func Max(column string) string {
+
 	return "MAX(" + column + ")"
+}
+
+func Count(column string) string {
+	return "COUNT(" + column + ")"
 }
 
 func Sum(column string) string {

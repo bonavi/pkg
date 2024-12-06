@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"pkg/errors"
 )
 
 const JSONNull = "null"
@@ -16,6 +18,25 @@ type Date struct {
 
 func NewDate(year int, month time.Month, day int) Date {
 	return Date{time.Date(year, month, day, 0, 0, 0, 0, time.UTC)}
+}
+
+func Today() Date {
+	now := time.Now()
+	return Date{time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)}
+}
+
+func (d Date) AddDate(year int, month int, day int) Date {
+	return Date{d.Time.AddDate(year, month, day)}
+}
+
+func Parse(str string) (date Date, err error) {
+
+	time, err := time.Parse(DateFormat, str)
+	if err != nil {
+		return date, errors.BadRequest.Wrap(err)
+	}
+
+	return Date{Time: time}, nil
 }
 
 func (d *Date) UnmarshalJSON(b []byte) (err error) {
