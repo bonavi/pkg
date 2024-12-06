@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"pkg/errors"
+	"pkg/maps"
 )
 
 // ToMap возращает map, где ключом является поле структуры, а значением сама структура
@@ -15,6 +16,13 @@ func ToMap[K comparable, V any](slice []V, field func(V) K) map[K]V {
 		mapBySlise[field(v)] = v
 	}
 	return mapBySlise
+}
+
+func Unique[K comparable](slice []K) []K {
+	mapWithStruct := GetMapValueStruct(slice, func(sliceItem K) K {
+		return sliceItem
+	})
+	return maps.Keys(mapWithStruct)
 }
 
 // GetFields возвращает массив значений полей из массива структур
