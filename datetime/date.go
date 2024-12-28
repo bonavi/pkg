@@ -20,6 +20,38 @@ func NewDate(year int, month time.Month, day int) Date {
 	return Date{time.Date(year, month, day, 0, 0, 0, 0, time.UTC)}
 }
 
+func (d Date) GetStartOfWeek() Date {
+	weekday := int(d.Weekday())
+	if weekday == 0 {
+		weekday = 7
+	}
+	return d.AddDate(0, 0, -weekday+1)
+}
+
+func (d Date) GetEndOfWeek() Date {
+	weekday := int(d.Weekday())
+	if weekday == 0 {
+		weekday = 7
+	}
+	return d.AddDate(0, 0, 7-weekday)
+}
+
+func (d Date) GetStartOfMonth() Date {
+	return NewDate(d.Year(), d.Month(), 1)
+}
+
+func (d Date) GetEndOfMonth() Date {
+	return d.GetStartOfMonth().AddDate(0, 1, -1)
+}
+
+func (d Date) GetStartOfYear() Date {
+	return NewDate(d.Year(), time.January, 1)
+}
+
+func (d Date) GetEndOfYear() Date {
+	return NewDate(d.Year(), time.December, 31)
+}
+
 func Today() Date {
 	now := time.Now()
 	return Date{time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)}

@@ -7,9 +7,8 @@ import (
 
 	"github.com/gorilla/schema"
 
-	"pkg/necessary"
-
 	"pkg/errors"
+	"pkg/necessary"
 	"pkg/reflectUtils"
 	"pkg/validator"
 )
@@ -51,6 +50,18 @@ func Decoder(
 		}
 	}
 
+	// Валидируем получившуюся структуру
+	if err = validator.Validate(dest); err != nil {
+		return errors.BadRequest.Wrap(err,
+			errors.SkipThisCallOption(),
+		)
+	}
+
+	return nil
+}
+
+func SetNecessary(ctx context.Context, dest any) error {
+
 	// Получаем необходимую для каждого запроса информацию из контекста
 	necessaryInformation, err := necessary.ExtractNecessaryFromCtx(ctx)
 	if err != nil {
@@ -63,13 +74,6 @@ func Decoder(
 	// Заполняем необходимую для каждого запроса информацию в структуру
 	if err = necessary.SetNecessary(necessaryInformation, dest); err != nil {
 		return errors.InternalServer.Wrap(err,
-			errors.SkipThisCallOption(),
-		)
-	}
-
-	// Валидируем получившуюся структуру
-	if err = validator.Validate(dest); err != nil {
-		return errors.BadRequest.Wrap(err,
 			errors.SkipThisCallOption(),
 		)
 	}
