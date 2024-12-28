@@ -10,7 +10,6 @@ import (
 	"pkg/errors"
 	"pkg/necessary"
 	"pkg/reflectUtils"
-	"pkg/validator"
 )
 
 type DecodeMethod int
@@ -48,13 +47,6 @@ func Decoder(
 				errors.SkipThisCallOption(),
 			)
 		}
-	}
-
-	// Валидируем получившуюся структуру
-	if err = validator.Validate(dest); err != nil {
-		return errors.BadRequest.Wrap(err,
-			errors.SkipThisCallOption(),
-		)
 	}
 
 	return nil
