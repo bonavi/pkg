@@ -4,25 +4,17 @@ import (
 	"fmt"
 
 	"pkg/errors"
-	"pkg/maps"
 )
 
-// ToMap возращает map, где ключом является поле структуры, а значением сама структура
+// ToMap возвращает map, где ключом является поле структуры, а значением сама структура
 // Example:
 // AccountGroupsMap := slice.ToMap(_accountGroups, func(ag model.AccountGroup) uint32 { return ag.ID })
 func ToMap[K comparable, V any](slice []V, field func(V) K) map[K]V {
-	mapBySlise := make(map[K]V, len(slice))
+	mapBySlice := make(map[K]V, len(slice))
 	for _, v := range slice {
-		mapBySlise[field(v)] = v
+		mapBySlice[field(v)] = v
 	}
-	return mapBySlise
-}
-
-func Unique[K comparable](slice []K) []K {
-	mapWithStruct := GetMapValueStruct(slice, func(sliceItem K) K {
-		return sliceItem
-	})
-	return maps.Keys(mapWithStruct)
+	return mapBySlice
 }
 
 // GetFields возвращает массив значений полей из массива структур
@@ -33,6 +25,26 @@ func GetFields[K comparable, V any](slice []V, field func(V) K) []K {
 	for _, v := range slice {
 		fields = append(fields, field(v))
 	}
+	return fields
+}
+
+// GetUniqueFields возвращает массив уникальных значений полей из массива структур
+// Example:
+// AccountGroupsIDs := slice.GetUniqueFields(_accountGroups, func(ag model.AccountGroup) uint32 { return ag.ID })
+func GetUniqueFields[S any, V comparable](slice []S, field func(S) V) []V {
+
+	fieldsMap := make(map[V]struct{}, len(slice))
+
+	for _, s := range slice {
+		fieldsMap[field(s)] = struct{}{}
+	}
+
+	fields := make([]V, 0, len(fieldsMap))
+
+	for k := range fieldsMap {
+		fields = append(fields, k)
+	}
+
 	return fields
 }
 
@@ -60,7 +72,6 @@ func GetMapValueStruct[K comparable, V any](slice []V, field func(V) K) map[K]st
 }
 
 // JoinExclusive возвращает массивы, содержащие только уникальные элементы
-// (не работает с указателями, так как указатели являются ссылками на разные объекты, даже если значения объектов одинаковы)
 // Example:
 // leftObjectsExclusive, rightObjectsExclusive := slice.JoinExclusive(leftObjects, rightObjects)
 func JoinExclusive[T comparable](leftObjects, rightObjects []T) (leftObjectsExclusive, rightObjectsExclusive []T) {
@@ -84,44 +95,81 @@ func JoinExclusive[T comparable](leftObjects, rightObjects []T) (leftObjectsExcl
 
 // First возвращает первый элемент массива
 // Если массив пустой, возвращает nil
-// example:
+// Example:
 // firstElement := slice.First([]int{1, 2, 3})
 // Возвращает указатель на копию первого элемента массива!
-func First[T any](array []T) *T {
+func First[T any](array []T) (value T, err error) {
+	// Если массив пустой
 	if len(array) == 0 {
-		return nil
-	} else {
-		return &array[0]
+		// Возвращаем ошибку
+		return value, errors.NotFound.Wrap(ErrSliceIsEmpty,
+			errors.ParamsOption("Type", fmt.Sprintf("%T", value)),
+		)
 	}
+	// Возвращаем первый элемент массива
+	return array[0], nil
 }
+
+var ErrSliceIsEmpty = errors.New("slice is empty")
 
 // FirstWithError получает массив и ошибку (как правило в таком формате возвращают функции получения массива элементов)
 // Если пришедшая ошибка не пустая, просто возвращаем ее
 // Если пришедший массив пустой, возвращаем ошибку
 // Если массив не пустой, то возвращаем первый элемент этого массива
-// example:
+// Example:
 // firstElement, err := slice.FirstWithError(s.GetArray())
 func FirstWithError[T any](array []T, initialErr error) (value T, err error) {
-
 	// Если пришедшая ошибка не пустая
 	if initialErr != nil {
-
 		// Возвращаем ее
 		return value, initialErr
 	}
+	// Получаем первый элемент массива или ошибку
+	return First(array)
+}
 
-	// Получаем первый элемент массива
-	valuePtr := First(array)
+// Contains проверяет, содержится ли значение в массиве, используя мапу для быстрого поиска.
+// Пример использования:
+// isPresent := slice.Contains([]int{1, 2, 3}, 2)
+func Contains[T comparable](slice []T, value T) bool {
 
-	// Если элемента нет == массив пустой
-	if valuePtr == nil {
+	// Проходимся по каждому элементу
+	for _, v := range slice {
 
-		// Возвращаем ошибку
-		return value, errors.NotFound.New("Значение массива не найдено",
-			errors.ParamsOption("Type", fmt.Sprintf("%T", value)),
-		)
+		// Если элемент найден
+		if v == value {
+			return true
+		}
 	}
 
-	// Возвращаем первый элемент массива
-	return *valuePtr, nil
+	return false
+}
+
+// ContainsSlice проверяет, содержатся ли все значения target в массиве slice, используя мапу для быстрого поиска.
+// Пример использования:
+// isPresent := slice.Contains([]int{1, 2, 3}, 1, 2)
+func ContainsSlice[T comparable](slice []T, target ...T) bool {
+
+	sliceMap := GetMapValueStruct(slice, func(v T) T { return v })
+
+	// Проходимся по каждому элементу
+	for _, v := range target {
+
+		// Если элемент не найден
+		if _, ok := sliceMap[v]; !ok {
+			return false
+		}
+	}
+
+	return true
+}
+
+// Filter возвращает массив, содержащий только те элементы, которые удовлетворяют условию
+func Filter[T any](slice []T, filter func(T) bool) (filtered []T) {
+	for _, v := range slice {
+		if filter(v) {
+			filtered = append(filtered, v)
+		}
+	}
+	return filtered
 }

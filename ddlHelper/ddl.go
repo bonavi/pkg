@@ -1,6 +1,9 @@
 package ddlHelper
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 func BuildJoin(joinTableWithAlias, joinColumnWithPrefix, columnWithPrefix string) string {
 	return joinTableWithAlias + " ON " + joinColumnWithPrefix + " = " + columnWithPrefix
@@ -50,6 +53,10 @@ func Desc(column string) string {
 
 func Asc(column string) string {
 	return column + " ASC"
+}
+
+func PartContains(column string, value any) (string, any) {
+	return fmt.Sprintf("%s @> ?", column), value
 }
 
 const SelectAll = "*"

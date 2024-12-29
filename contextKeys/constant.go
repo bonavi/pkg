@@ -12,6 +12,7 @@ const (
 	DeviceIDKey ContextKey = iota + 1
 	UserIDKey
 	TaskIDKey
+	XRequestIDKey
 )
 
 func SetDeviceID(ctx context.Context, deviceID string) context.Context {

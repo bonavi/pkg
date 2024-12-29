@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -65,6 +66,8 @@ type LogOption int
 const (
 	LogAsError LogOption = iota
 	LogAsWarning
+	LogAsDebug
+	LogAsInfo
 	LogNone
 )
 
@@ -76,7 +79,7 @@ var TypeToLogOption = map[ErrorType]LogOption{
 	InternalServer: LogAsError,
 	Forbidden:      LogAsWarning,
 	Unauthorized:   LogAsWarning,
-	ClientReject:   LogAsWarning,
+	Timeout:        LogAsWarning,
 	BadGateway:     LogAsWarning,
 }
 
@@ -252,6 +255,10 @@ func Is(err error, target error) bool {
 			return errors.Is(err, target) // default - default
 		}
 	}
+}
+
+func IsContextError(err error) bool {
+	return Is(err, context.Canceled) || Is(err, context.DeadlineExceeded)
 }
 
 func New(err string) error {

@@ -1,5 +1,7 @@
 package maps
 
+import "pkg/errors"
+
 func Values[K comparable, V any](mapa map[K]V) []V {
 	slice := make([]V, 0, len(mapa))
 	for _, v := range mapa {
@@ -29,4 +31,17 @@ func Join[K comparable, V any](leftMap, rightMap map[K]V) map[K]V {
 	}
 
 	return joinMap
+}
+
+func Revert[K comparable, V comparable](mapa map[K]V) (map[V]K, error) {
+	revertMap := make(map[V]K, len(mapa))
+
+	for k, v := range mapa {
+		if _, ok := revertMap[v]; ok {
+			return nil, errors.BadRequest.New("value is not unique")
+		}
+		revertMap[v] = k
+	}
+
+	return revertMap, nil
 }

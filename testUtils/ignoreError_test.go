@@ -26,9 +26,9 @@ func TestIgnoreError(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := IgnoreError(tt.args.v, tt.args.err)
+			got := IgnoreErrorWithArgument(tt.args.v, tt.args.err)
 			if got != tt.want {
-				t.Errorf("IgnoreError() = %v, want %v", got, tt.want)
+				t.Errorf("IgnoreErrorWithArgument() = %v, want %v", got, tt.want)
 			}
 		})
 	}

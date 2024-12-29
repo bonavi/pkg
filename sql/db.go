@@ -15,7 +15,7 @@ var _ SQL = &DB{DB: nil}
 type SQL interface {
 	Unsafe() *DB
 	Begin(context.Context) (*Tx, error)
-	Ping() error
+	Ping(context.Context) error
 	Get(ctx context.Context, dest any, q sq.Sqlizer) error
 	Select(ctx context.Context, dest any, q sq.Sqlizer) error
 	Query(ctx context.Context, q sq.Sqlizer) (*Rows, error)
@@ -54,8 +54,8 @@ func (s *DB) Begin(ctx context.Context) (*Tx, error) {
 	return &Tx{tx}, nil
 }
 
-func (s *DB) Ping() error {
-	if err := s.DB.Ping(); err != nil {
+func (s *DB) Ping(ctx context.Context) error {
+	if err := s.DB.PingContext(ctx); err != nil {
 		return wrapSQLError(err)
 	}
 	return nil
@@ -351,7 +351,7 @@ func wrapSQLError(err error) error {
 
 	switch {
 	case errors.Is(err, context.Canceled):
-		return errors.ClientReject.Wrap(err, thirdPathDepthOption)
+		return errors.Timeout.Wrap(err, thirdPathDepthOption)
 	case errors.Is(err, sql.ErrNoRows):
 		return errors.NotFound.Wrap(err, thirdPathDepthOption)
 	default:

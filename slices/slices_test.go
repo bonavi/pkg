@@ -251,9 +251,10 @@ func TestFirst(t *testing.T) {
 		array []T
 	}
 	type testCase[T any] struct {
-		name string
-		args args[T]
-		want *T
+		name    string
+		args    args[T]
+		want    T
+		wantErr error
 	}
 	tests := []testCase[int]{
 		{
@@ -261,28 +262,32 @@ func TestFirst(t *testing.T) {
 			args: args[int]{
 				array: []int{},
 			},
-			want: nil,
+			want:    0,
+			wantErr: errors.NotFound.New(""),
 		},
 		{
 			name: "2. Получение первого элемента из массива с одним элементом",
 			args: args[int]{
 				array: []int{1},
 			},
-			want: pointer.Pointer(1),
+			want:    1,
+			wantErr: nil,
 		},
 		{
 			name: "3. Получение первого элемента из массива с несколькими элементами",
 			args: args[int]{
 				array: []int{1, 2, 3},
 			},
-			want: pointer.Pointer(1),
+			want:    1,
+			wantErr: nil,
 		},
 		{
 			name: "4. Получение первого элемента из неинициализированного массива",
 			args: args[int]{
 				array: nil,
 			},
-			want: nil,
+			want:    0,
+			wantErr: errors.NotFound.New(""),
 		},
 	}
 	num1 := pointer.Pointer(1)
@@ -294,57 +299,51 @@ func TestFirst(t *testing.T) {
 			args: args[*int]{
 				array: []*int{},
 			},
-			want: nil,
+			want:    nil,
+			wantErr: errors.NotFound.New(""),
 		},
 		{
 			name: "6. Получение первого элемента из массива с одним элементом (указатели)",
 			args: args[*int]{
 				array: []*int{num1},
 			},
-			want: &num1,
+			want:    num1,
+			wantErr: nil,
 		},
 		{
 			name: "7. Получение первого элемента из массива с несколькими элементами (указатели)",
 			args: args[*int]{
 				array: []*int{num1, num2, num3},
 			},
-			want: &num1,
+			want:    num1,
+			wantErr: nil,
 		},
 		{
 			name: "8. Получение первого элемента из неинициализированного массива (указатели)",
 			args: args[*int]{
 				array: nil,
 			},
-			want: nil,
+			want:    nil,
+			wantErr: errors.NotFound.New(""),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := First(tt.args.array)
-			if got == nil || tt.want == nil {
-				if got != tt.want {
-					t.Errorf("First() = %v, want %v", got, tt.want)
-				}
-			} else {
-				if *got != *tt.want {
-					t.Errorf("First() = %v, want %v", *got, *tt.want)
-				}
+			got, err := First(tt.args.array)
+			testUtils.CheckError(t, tt.wantErr, err, false)
+			if got != tt.want {
+				t.Errorf("First() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 	for _, tt := range tests2 {
 		t.Run(tt.name, func(t *testing.T) {
-			got := First(tt.args.array)
-			switch {
-			case got == nil || tt.want == nil:
+			got, err := First(tt.args.array)
+			testUtils.CheckError(t, tt.wantErr, err, false)
+			if got == nil || tt.want == nil {
 				if got != tt.want {
 					t.Errorf("First() = %v, want %v", got, tt.want)
 				}
-			case *got != *tt.want:
-				t.Errorf("First() = %v, want %v", *got, *tt.want)
-			case **got != **tt.want:
-				t.Errorf("First() = %v, want %v", **got, **tt.want)
-
 			}
 		})
 	}
@@ -1034,4 +1033,43 @@ func TestToMap(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestContainsSlice(t *testing.T) {
+	type args[K comparable] struct {
+		slice  []K
+		target []K
+	}
+	type testCase[K comparable] struct {
+		name string
+		args args[K]
+		want bool
+	}
+	tests := []testCase[int]{
+		{
+			name: "1. Поиск значений слайса в другом слайсе, полное пересечение",
+			args: args[int]{
+				slice:  []int{1, 2, 3, 4, 5},
+				target: []int{1, 2, 3},
+			},
+			want: true,
+		},
+		{
+			name: "2. Поиск значений слайса в другом слайсе, частичное пересечение",
+			args: args[int]{
+				slice:  []int{1, 2, 3, 4, 5},
+				target: []int{1, 2, 6},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ContainsSlice(tt.args.slice, tt.args.target...)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ContainsSlice() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+
 }

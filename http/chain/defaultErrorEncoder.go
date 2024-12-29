@@ -73,5 +73,5 @@ var humanTextByLevel = map[errors.ErrorType]string{
 	errors.Teapot:         "Разработчик забыл написать текст ошибки",
 	errors.BadGateway:     "Произошла ошибка на сервере внешнего сервиса",
 	errors.Unauthorized:   "Пользователь не авторизован",
-	errors.ClientReject:   "Клиент отказался принимать данные",
+	errors.Timeout:        "Клиент отказался принимать данные",
 }

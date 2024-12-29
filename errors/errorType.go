@@ -11,6 +11,6 @@ const (
 	InternalServer = ErrorType(http.StatusInternalServerError)
 	Forbidden      = ErrorType(http.StatusForbidden)
 	Unauthorized   = ErrorType(http.StatusUnauthorized)
-	ClientReject   = ErrorType(http.StatusNotAcceptable)
+	Timeout        = ErrorType(http.StatusRequestTimeout)
 	BadGateway     = ErrorType(http.StatusBadGateway)
 )

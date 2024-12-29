@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"pkg/errors"
 	"pkg/log/model"
 )
 
@@ -86,4 +87,22 @@ func Debug(ctx context.Context, log any, opts ...Option) {
 
 func GetSystemInfo() model.SystemInfo {
 	return logger.systemInfo
+}
+
+func LogError(ctx context.Context, err error) {
+
+	customErr := errors.CastError(err)
+
+	switch customErr.LogAs {
+	case errors.LogAsError:
+		Error(ctx, err)
+	case errors.LogAsWarning:
+		Warning(ctx, err)
+	case errors.LogAsDebug:
+		Debug(ctx, err)
+	case errors.LogAsInfo:
+		Info(ctx, err)
+	case errors.LogNone:
+		break
+	}
 }
