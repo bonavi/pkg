@@ -1,6 +1,8 @@
 package log
 
-import "context"
+import (
+	"context"
+)
 
 // Handler - это интерфейс обработчика журналов.
 type Handler interface {

@@ -1,8 +1,6 @@
 package slices
 
 import (
-	"fmt"
-
 	"pkg/errors"
 )
 
@@ -102,9 +100,7 @@ func First[T any](array []T) (value T, err error) {
 	// Если массив пустой
 	if len(array) == 0 {
 		// Возвращаем ошибку
-		return value, errors.NotFound.Wrap(ErrSliceIsEmpty,
-			errors.ParamsOption("Type", fmt.Sprintf("%T", value)),
-		)
+		return value, ErrSliceIsEmpty
 	}
 	// Возвращаем первый элемент массива
 	return array[0], nil

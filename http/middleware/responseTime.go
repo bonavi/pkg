@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -16,7 +17,7 @@ import (
 
 var responseTimeMetric *prometheus.HistogramVec
 
-func Init(serviceName string) error {
+func Init(ctx context.Context, serviceName string) error {
 
 	responseTimeMetric = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace:                       serviceName,
@@ -35,7 +36,7 @@ func Init(serviceName string) error {
 	}, []string{"path", "status_code"})
 
 	if err := prometheus.Register(responseTimeMetric); err != nil {
-		return errors.InternalServer.Wrap(err)
+		return errors.InternalServer.Wrap(ctx, err)
 	}
 
 	return nil
@@ -48,7 +49,7 @@ func ResponseTime(next http.Handler) http.Handler {
 
 		// Проверяем, что TimeMetric инициализирован
 		if responseTimeMetric == nil {
-			chain.DefaultErrorEncoder(ctx, w, errors.InternalServer.New("ResponseTime prometheus metric not initialized"))
+			chain.DefaultErrorEncoder(ctx, w, errors.InternalServer.New(ctx, "ResponseTime prometheus metric not initialized"))
 			return
 		}
 

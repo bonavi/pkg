@@ -48,7 +48,7 @@ func (h *ConsoleHandler) getPath(skip int) (path string) {
 }
 
 // handle реализует интерфейс Handler.
-func (h *ConsoleHandler) handle(_ context.Context, level LogLevel, log any, opts ...Option) {
+func (h *ConsoleHandler) handle(ctx context.Context, level LogLevel, log any, opts ...Option) {
 	if h.logLevel > level {
 		return
 	}
@@ -68,7 +68,7 @@ func (h *ConsoleHandler) handle(_ context.Context, level LogLevel, log any, opts
 	if v, ok := log.(error); ok {
 
 		//// Получаем путь из ошибки
-		customErr := errors.CastError(v)
+		customErr := errors.CastError(ctx, v)
 		if len(customErr.StackTrace) > 0 {
 			path = customErr.StackTrace[0]
 		}
@@ -109,7 +109,7 @@ func (h *ConsoleHandler) handle(_ context.Context, level LogLevel, log any, opts
 		}
 
 	case error: // Если передана ошибка
-		customErr := errors.CastError(v)
+		customErr := errors.CastError(ctx, v)
 		consoleLogStruct = consoleLog{
 			Level:   level,
 			Message: customErr.Error(),

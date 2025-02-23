@@ -1,6 +1,6 @@
 package errors
 
-var HumanTextByLevel = map[ErrorType]string{
+var humanTextByLevel = map[ErrorType]string{
 	BadRequest:     "Введены неверные данные",
 	InternalServer: "Произошла непредвиденная ошибка",
 	NotFound:       "Данные не найдены",
@@ -9,4 +9,14 @@ var HumanTextByLevel = map[ErrorType]string{
 	BadGateway:     "Произошла ошибка на сервере внешнего сервиса",
 	Unauthorized:   "Пользователь не авторизован",
 	Timeout:        "Превышено время ожидания",
+}
+
+func (et ErrorType) HumanText() string {
+
+	humanText, ok := humanTextByLevel[et]
+	if !ok {
+		return "Произошла непредвиденная ошибка"
+	}
+
+	return humanText
 }

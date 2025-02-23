@@ -20,8 +20,8 @@ func (c *PostgreSQLConfig) getURL() string {
 	return fmt.Sprintf("postgres://%v:%v@%v/%v", c.User, c.Password, c.Host, c.Database)
 }
 
-func NewClientPgsql(conf PostgreSQLConfig) (*sql.DB, error) {
-	db, err := sql.Open("pgx", conf.getURL())
+func NewClientPgsql(ctx context.Context, conf PostgreSQLConfig) (*sql.DB, error) {
+	db, err := sql.Open(ctx, "pgx", conf.getURL())
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func NewClientPgsql(conf PostgreSQLConfig) (*sql.DB, error) {
 	db.DB.SetMaxOpenConns(MaxOpenConns)
 	db.DB.SetMaxIdleConns(MaxIdleConns)
 
-	err = db.Ping(context.TODO())
+	err = db.Ping(ctx)
 	if err != nil {
 		return nil, err
 	}

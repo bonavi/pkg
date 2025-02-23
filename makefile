@@ -1,13 +1,10 @@
-easyjson:
-	 easyjson log/jsonHandler.go
-
 update-linter:
 	brew upgrade golangci-lint
 
-lint: easyjson
+lint:
 	golangci-lint run -v
 
-mockery: easyjson
+mockery:
 	find . -type f -name 'mock_*' -exec rm {} +
 	find . -type f -name "mockWrappers.go" -execdir mv -n -- {} mockWrappers.txt \; # Костылина, чтобы не падала генерация моков
 	mockery

@@ -11,7 +11,6 @@ import (
 
 	"pkg/decimal"
 	"pkg/errors"
-	"pkg/necessary"
 	"pkg/reflectUtils"
 )
 
@@ -30,7 +29,7 @@ func Decode(
 ) (err error) {
 
 	// Проверяем типы данных
-	if err = reflectUtils.CheckPointerToStruct(dest); err != nil {
+	if err = reflectUtils.CheckPointerToStruct(ctx, dest); err != nil {
 		return err
 	}
 
@@ -45,8 +44,7 @@ func Decode(
 			break
 		}
 		if err != nil {
-			return errors.BadRequest.Wrap(
-				err,
+			return errors.BadRequest.Wrap(ctx, err,
 				errors.SkipThisCallOption(),
 			)
 		}
@@ -64,7 +62,8 @@ var decimalConverter = func(val string) reflect.Value {
 }
 
 func DecodeFiber(
-	ctx *fiber.Ctx,
+	ctx context.Context,
+	c *fiber.Ctx,
 	decodeSchema DecodeMethod,
 	dest any,
 ) (err error) {
@@ -78,7 +77,7 @@ func DecodeFiber(
 
 	switch decodeSchema {
 	case DecodeSchema:
-		queries := ctx.Queries()
+		queries := c.Queries()
 		classicQueries := make(map[string][]string)
 		for key, value := range queries {
 			classicQueries[key] = []string{value}
@@ -87,32 +86,10 @@ func DecodeFiber(
 		decoder.RegisterConverter(decimal.Decimal{}, decimalConverter) //nolint:exhaustruct
 		err = decoder.Decode(dest, classicQueries)
 	case DecodeJSON:
-		err = json.Unmarshal(ctx.Body(), &dest)
+		err = json.Unmarshal(c.Body(), &dest)
 	}
 	if err != nil {
-		return errors.BadRequest.Wrap(
-			err,
-			errors.SkipThisCallOption(),
-		)
-	}
-
-	return nil
-}
-
-func SetNecessary(ctx context.Context, dest any) error {
-
-	// Получаем необходимую для каждого запроса информацию из контекста
-	necessaryInformation, err := necessary.ExtractNecessaryFromCtx(ctx)
-	if err != nil {
-		return errors.BadRequest.Wrap(
-			err,
-			errors.SkipThisCallOption(),
-		)
-	}
-
-	// Заполняем необходимую для каждого запроса информацию в структуру
-	if err = necessary.SetNecessary(necessaryInformation, dest); err != nil {
-		return errors.InternalServer.Wrap(err,
+		return errors.BadRequest.Wrap(ctx, err,
 			errors.SkipThisCallOption(),
 		)
 	}

@@ -19,13 +19,14 @@ type Server struct {
 }
 
 func GetDefaultServer(
+	ctx context.Context,
 	addr string,
 	router http.Handler,
 ) (*Server, error) {
 
 	// Проверяем, передали ли адрес
 	if addr == "" {
-		return nil, errors.InternalServer.New("Переменная окружения LISTEN_HTTP не задана",
+		return nil, errors.InternalServer.New(ctx, "Переменная окружения LISTEN_HTTP не задана",
 			errors.SkipThisCallOption(),
 		)
 	}
@@ -58,7 +59,7 @@ func (s *Server) Serve(ctx context.Context) error {
 		if errors.Is(err, http.ErrServerClosed) {
 			return nil
 		}
-		return errors.InternalServer.Wrap(err,
+		return errors.InternalServer.Wrap(ctx, err,
 			errors.SkipThisCallOption(),
 		)
 	}

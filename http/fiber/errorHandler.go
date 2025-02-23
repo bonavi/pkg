@@ -32,7 +32,7 @@ var DefaultErrorHandler = func(ctx *fiber.Ctx, err error) error {
 
 	// Проставляем HumanText по дефолту, если его не определили при создании ошибки
 	if customErr.HumanText != "" {
-		customErr.HumanText = errors.HumanTextByLevel[customErr.ErrorType]
+		customErr.HumanText = errors.humanTextByLevel[customErr.ErrorType]
 	}
 	customErr.DeveloperText = customErr.Err.Error()
 

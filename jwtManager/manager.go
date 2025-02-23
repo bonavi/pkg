@@ -1,6 +1,7 @@
 package jwtManager
 
 import (
+	"context"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -10,7 +11,7 @@ import (
 )
 
 var (
-	ErrUserUnauthorized = errors.New("user unauthorized")
+	ErrTokenExpired = errors.New("tokenExpired")
 )
 
 type JWTManager struct {
@@ -46,10 +47,10 @@ const (
 	AccessToken
 )
 
-func GenerateToken[T any](tokenType TokenType, customClaims T) (string, error) {
+func GenerateToken[T any](ctx context.Context, tokenType TokenType, customClaims T) (string, error) {
 
 	if jwtManager == nil {
-		return "", errors.InternalServer.New("JWTManager is not initialized")
+		return "", errors.InternalServer.New(ctx, "JWTManager is not initialized")
 	}
 
 	claims := MyCustomClaims[T]{
@@ -69,31 +70,34 @@ func GenerateToken[T any](tokenType TokenType, customClaims T) (string, error) {
 
 	tokenStr, err := token.SignedString(jwtManager.accessTokenSigningKey)
 	if err != nil {
-		return "", errors.InternalServer.Wrap(err)
+		return "", errors.InternalServer.Wrap(ctx, err)
 	}
 
 	return tokenStr, nil
 }
 
-func ParseToken[T any](reqToken string) (T, error) {
+func ParseToken[T any](ctx context.Context, reqToken string) (T, error) {
 
 	var typeZeroValue T
 
+	// Если менеджер не инициализирован, возвращаем ошибку
 	if jwtManager == nil {
-		return typeZeroValue, errors.InternalServer.New("JWTManager is not initialized",
+		return typeZeroValue, errors.InternalServer.New(ctx, "JWTManager is not initialized",
 			errors.SkipThisCallOption(),
 		)
 	}
 
+	// Если токен пустой, возвращаем ошибку
 	if reqToken == "" {
-		return typeZeroValue, errors.Unauthorized.New("JWT-token is empty",
+		return typeZeroValue, errors.Unauthorized.New(ctx, "JWT-token is empty",
 			errors.SkipThisCallOption(),
 		)
 	}
 
+	// Парсим токен
 	token, jwtErr := jwt.ParseWithClaims(reqToken, &MyCustomClaims[T]{}, func(token *jwt.Token) (i any, err error) { //nolint:exhaustruct
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.InternalServer.New("Unexpected signing method",
+			return nil, errors.InternalServer.New(ctx, "Unexpected signing method",
 				errors.ParamsOption("token", token.Header["alg"]),
 				errors.SkipThisCallOption(),
 			)
@@ -101,33 +105,49 @@ func ParseToken[T any](reqToken string) (T, error) {
 
 		return jwtManager.accessTokenSigningKey, nil
 	})
+
+	// Если ошибка не пустая
 	if jwtErr != nil {
+
+		// Если ошибка валидатора
 		var validationError *jwt.ValidationError
 		if errors.As(jwtErr, &validationError) {
 
 			switch {
+
+			// Если токен истек
 			case validationError.Errors == jwt.ValidationErrorExpired:
-				jwtErr = errors.Unauthorized.Wrap(jwtErr,
+
+				// Если токен истек, определяем ошибку с errorf, чтобы потом вернуть
+				jwtErr = errors.Unauthorized.Wrap(ctx, jwtErr,
 					errors.SkipPreviousCallerOption(),
-					errors.ErrorfOption(ErrUserUnauthorized),
+					errors.ErrorfOption(ErrTokenExpired),
 				)
+
+			// Если другая ошибка, просто возвращаем ее
 			default:
-				return typeZeroValue, errors.Unauthorized.Wrap(jwtErr,
+				return typeZeroValue, errors.Unauthorized.Wrap(ctx, jwtErr,
 					errors.SkipPreviousCallerOption(),
 				)
 			}
 
-		} else {
-			return typeZeroValue, errors.InternalServer.Wrap(jwtErr,
+		} else { // Если ошибка не валидатора
+			return typeZeroValue, errors.InternalServer.Wrap(ctx, jwtErr,
 				errors.SkipPreviousCallerOption(),
 			)
 		}
 	}
 
+	// Если ошибок нет, пробуем получить кастомные клеймы
 	claims, ok := token.Claims.(*MyCustomClaims[T])
 	if !ok {
-		return typeZeroValue, errors.InternalServer.New("Error get user claims from token")
+		return typeZeroValue, errors.InternalServer.New(ctx, "Error get user claims from token")
 	}
 
-	return claims.CustomClaims, jwtErr
+	// Обрабатываем ошибку парсера jwt
+	if jwtErr != nil {
+		return claims.CustomClaims, jwtErr
+	}
+
+	return claims.CustomClaims, nil
 }

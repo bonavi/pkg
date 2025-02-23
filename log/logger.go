@@ -6,46 +6,41 @@ import (
 	"time"
 
 	"pkg/errors"
-	"pkg/log/model"
 )
 
-// loggerSettings - конфигурация логгера
-type loggerSettings struct {
+// settings - конфигурация логгера
+type settings struct {
 
 	// Массив обработчиков лога
 	handlers []Handler
 
 	// Дополнительные параметры, которые добавляются в каждый тег и настраиваются при инициализации
-	systemInfo model.SystemInfo
+	systemInfo any
+
+	userInfoContextKey any
 }
 
 // logger - синглтон переменная логгера
-var logger = &loggerSettings{
-	handlers: []Handler{
-		NewConsoleHandler(os.Stdout, LevelDebug),
-	},
-	systemInfo: model.SystemInfo{
-		Hostname: "",
-		Version:  "",
-		Commit:   "",
-		Build:    "",
-		Env:      "",
-	},
+var logger = &settings{
+	handlers:   []Handler{},
+	systemInfo: nil,
 }
 
 // Init конфигурирует логгер
 func Init(
-	systemInfo model.SystemInfo,
+	systemInfo any,
+	userInfoContextKey any,
 	handlers ...Handler,
 ) {
-	logger = &loggerSettings{
-		systemInfo: systemInfo,
-		handlers:   handlers,
+	logger = &settings{
+		systemInfo:         systemInfo,
+		userInfoContextKey: userInfoContextKey,
+		handlers:           handlers,
 	}
 }
 
 func Off() {
-	logger = new(loggerSettings)
+	logger = new(settings)
 }
 
 // Error логгирует сообщения для ошибок системы
@@ -85,13 +80,9 @@ func Debug(ctx context.Context, log any, opts ...Option) {
 	}
 }
 
-func GetSystemInfo() model.SystemInfo {
-	return logger.systemInfo
-}
-
 func LogError(ctx context.Context, err error) {
 
-	customErr := errors.CastError(err)
+	customErr := errors.CastError(ctx, err)
 
 	switch customErr.LogAs {
 	case errors.LogAsError:

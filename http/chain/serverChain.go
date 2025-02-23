@@ -74,9 +74,11 @@ func (s *Chain) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		res any
 	)
 
-	defer panicRecover.PanicRecover(func(err error) {
-		s.errorEncode(ctx, w, err)
-	})
+	defer func() {
+		panicRecover.PanicRecover(ctx, func(err error) {
+			s.errorEncode(ctx, w, err)
+		})
+	}()
 
 	for _, f := range s.before {
 		ctx, err = f(ctx, r)

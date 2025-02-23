@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
-	"pkg/errors"
 )
 
 const JSONNull = "null"
@@ -65,7 +63,7 @@ func Parse(str string) (date Date, err error) {
 
 	time, err := time.Parse(DateFormat, str)
 	if err != nil {
-		return date, errors.BadRequest.Wrap(err)
+		return date, err
 	}
 
 	return Date{Time: time}, nil

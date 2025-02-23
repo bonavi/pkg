@@ -1,28 +1,25 @@
 package sql
 
 import (
+	"context"
+
 	"github.com/jmoiron/sqlx"
 )
-
-type TxInterface interface {
-	Commit() error
-	Rollback() error
-}
 
 type Tx struct {
 	Tx *sqlx.Tx
 }
 
-func (s *Tx) Commit() error {
+func (s *Tx) Commit(ctx context.Context) error {
 	if err := s.Tx.Commit(); err != nil {
-		return wrapSQLError(err)
+		return wrapSQLError(ctx, err)
 	}
 	return nil
 }
 
-func (s *Tx) Rollback() error {
+func (s *Tx) Rollback(ctx context.Context) error {
 	if err := s.Tx.Rollback(); err != nil {
-		return wrapSQLError(err)
+		return wrapSQLError(ctx, err)
 	}
 	return nil
 }

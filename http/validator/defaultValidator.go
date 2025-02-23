@@ -1,20 +1,22 @@
 package middleware
 
 import (
+	"context"
+
 	"pkg/errors"
 	"pkg/validator"
 )
 
 type validatorProtocol interface {
-	Validate() error
+	Validate(ctx context.Context) error
 }
 
-func Validate(object any) (err error) {
+func Validate(ctx context.Context, object any) (err error) {
 
 	// Если структура реализует интерфейс валидатора, то валидируем ее с помощью функции
 	if v, ok := object.(validatorProtocol); ok {
-		if err = v.Validate(); err != nil {
-			return errors.BadRequest.Wrap(
+		if err = v.Validate(ctx); err != nil {
+			return errors.BadRequest.Wrap(ctx,
 				err,
 				errors.SkipThisCallOption(),
 			)
@@ -23,7 +25,7 @@ func Validate(object any) (err error) {
 
 	// Валидируем структуру с помощью декларативного валидатора по тегам
 	if err = validator.Validate(object); err != nil {
-		return errors.BadRequest.Wrap(err,
+		return errors.BadRequest.Wrap(ctx, err,
 			errors.SkipThisCallOption(),
 		)
 	}

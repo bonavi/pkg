@@ -38,7 +38,7 @@ func Revert[K comparable, V comparable](mapa map[K]V) (map[V]K, error) {
 
 	for k, v := range mapa {
 		if _, ok := revertMap[v]; ok {
-			return nil, errors.BadRequest.New("value is not unique")
+			return nil, errors.New("value is not unique")
 		}
 		revertMap[v] = k
 	}

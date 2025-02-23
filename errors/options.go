@@ -25,13 +25,22 @@ type options struct {
 }
 
 func ParamsOption(parameters ...any) Option {
+
+	// Создаем map из параметров
 	p := make(map[string]string)
+
+	// Проходимся по параметрам
 	for i := 0; i < len(parameters); i += 2 {
+
+		// Добавляем параметры в map, каждый четный параметр - ключ, каждый нечетный - значение
 		p[fmt.Sprintf("%v", parameters[i])] = fmt.Sprintf("%v", parameters[i+1])
 	}
+
+	// Проверяем, если количество параметров нечетное, то добавляем в map ключ с текстом "param not found"
 	if len(parameters)%2 != 0 {
 		p[fmt.Sprintf("%v", parameters[len(parameters)-1])] = "param not found"
 	}
+
 	return func(o *options) { o.params = p }
 }
 

@@ -2,16 +2,15 @@ package log
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 
-	"github.com/mailru/easyjson"
+	"go.opentelemetry.io/otel/trace"
 
-	"pkg/contextKeys"
 	"pkg/errors"
 	"pkg/log/buffer/buffer"
-	"pkg/log/model"
 	"pkg/maps"
 	"pkg/stackTrace"
 )
@@ -23,8 +22,9 @@ type jsonLog struct {
 	Message    string            `json:"message"`
 	StackTrace []string          `json:"stackTrace"`
 	Params     map[string]string `json:"params,omitempty"`
-	SystemInfo model.SystemInfo  `json:"systemInfo"`
-	UserInfo   *model.UserInfo   `json:"userInfo"`
+	SystemInfo any               `json:"systemInfo"`
+	UserInfo   any               `json:"userInfo"`
+	TraceID    string            `json:"traceID"`
 }
 
 var _ Handler = new(JSONHandler)
@@ -49,8 +49,12 @@ func (h *JSONHandler) handle(ctx context.Context, level LogLevel, log any, opts 
 		return
 	}
 
+	// Получаем идентификатор трейса
+	spanData := trace.SpanFromContext(ctx).SpanContext()
+	traceID := spanData.TraceID().String()
+
 	// Получаем информацию о юзере, которая хранится в контексте
-	userInfo := contextKeys.GetUserInfo(ctx)
+	userInfo := ctx.Value(logger.userInfoContextKey)
 
 	state := newJSONState(buffer.New())
 	defer state.buf.Free()
@@ -71,12 +75,13 @@ func (h *JSONHandler) handle(ctx context.Context, level LogLevel, log any, opts 
 			Params:     logOpts.params,
 			UserInfo:   userInfo,
 			SystemInfo: logger.systemInfo,
+			TraceID:    traceID,
 		}
 
 	case error: // Если передана ошибка
 
 		//// Кастуем ее
-		customErr := errors.CastError(v)
+		customErr := errors.CastError(ctx, v)
 
 		// Собираем лог с дополнением данных из ошибки
 		logStruct = jsonLog{
@@ -86,6 +91,7 @@ func (h *JSONHandler) handle(ctx context.Context, level LogLevel, log any, opts 
 			Params:     maps.Join(logOpts.params, customErr.Params),
 			UserInfo:   userInfo,
 			SystemInfo: logger.systemInfo,
+			TraceID:    traceID,
 		}
 
 	default: // Если передан неизвестный тип данных
@@ -101,10 +107,11 @@ func (h *JSONHandler) handle(ctx context.Context, level LogLevel, log any, opts 
 			Params:     logOpts.params,
 			UserInfo:   userInfo,
 			SystemInfo: logger.systemInfo,
+			TraceID:    traceID,
 		}
 	}
 
-	json, err := easyjson.Marshal(logStruct)
+	json, err := json.Marshal(logStruct)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "logging: could not generate json jsonLog: %s\n", err)
 		return

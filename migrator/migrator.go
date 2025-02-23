@@ -37,14 +37,14 @@ type migrator struct {
 	conn *sql.DB
 }
 
-func NewMigrator(conn *sql.DB, config MigratorConfig) (Migrator, error) {
+func NewMigrator(ctx context.Context, conn *sql.DB, config MigratorConfig) (Migrator, error) {
 
 	goose.SetBaseFS(config.EmbedMigrations)
 
 	goose.SetLogger(newMigratorLogger())
 
 	if err := goose.SetDialect(string(config.Dialect)); err != nil {
-		return nil, errors.InternalServer.Wrap(err)
+		return nil, errors.InternalServer.Wrap(ctx, err)
 	}
 
 	return migrator{
@@ -55,7 +55,7 @@ func NewMigrator(conn *sql.DB, config MigratorConfig) (Migrator, error) {
 
 func (mg migrator) Up(ctx context.Context) error {
 	if err := goose.UpContext(ctx, mg.conn.DB.DB, mg.cfg.Dir); err != nil {
-		return errors.InternalServer.Wrap(err)
+		return errors.InternalServer.Wrap(ctx, err)
 	}
 
 	return nil
@@ -63,7 +63,7 @@ func (mg migrator) Up(ctx context.Context) error {
 
 func (mg migrator) Down(ctx context.Context) error {
 	if err := goose.DownContext(ctx, mg.conn.DB.DB, mg.cfg.Dir); err != nil {
-		return errors.InternalServer.Wrap(err)
+		return errors.InternalServer.Wrap(ctx, err)
 	}
 
 	return nil
