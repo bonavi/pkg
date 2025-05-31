@@ -36,7 +36,7 @@ func Init(ctx context.Context, serviceName string) error {
 	}, []string{"path", "status_code"})
 
 	if err := prometheus.Register(responseTimeMetric); err != nil {
-		return errors.InternalServer.Wrap(ctx, err)
+		return errors.InternalServer.Wrap(err)
 	}
 
 	return nil
@@ -49,7 +49,7 @@ func ResponseTime(next http.Handler) http.Handler {
 
 		// Проверяем, что TimeMetric инициализирован
 		if responseTimeMetric == nil {
-			chain.DefaultErrorEncoder(ctx, w, errors.InternalServer.New(ctx, "ResponseTime prometheus metric not initialized"))
+			chain.DefaultErrorEncoder(ctx, w, errors.InternalServer.New("ResponseTime prometheus metric not initialized"))
 			return
 		}
 
@@ -69,7 +69,7 @@ func ResponseTime(next http.Handler) http.Handler {
 		duration := time.Since(start)
 
 		if writerWithStatus.Status == nil {
-			log.Error(ctx, "Cannot get status code from handler")
+			log.Error("Cannot get status code from handler")
 			return
 		}
 

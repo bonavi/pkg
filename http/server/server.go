@@ -2,12 +2,10 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 
 	"pkg/errors"
-	"pkg/log"
 )
 
 const (
@@ -19,16 +17,13 @@ type Server struct {
 }
 
 func GetDefaultServer(
-	ctx context.Context,
 	addr string,
 	router http.Handler,
 ) (*Server, error) {
 
 	// Проверяем, передали ли адрес
 	if addr == "" {
-		return nil, errors.InternalServer.New(ctx, "Переменная окружения LISTEN_HTTP не задана",
-			errors.SkipThisCallOption(),
-		)
+		return nil, errors.InternalServer.New("Переменная окружения LISTEN_HTTP не задана").WithStackTraceJump(errors.SkipThisCall)
 	}
 
 	return &Server{
@@ -51,17 +46,13 @@ func GetDefaultServer(
 	}, nil
 }
 
-func (s *Server) Serve(ctx context.Context) error {
-
-	log.Info(ctx, fmt.Sprintf("HTTP-server is listening %v", s.server.Addr), log.SkipThisCallOption())
+func (s *Server) Serve() error {
 
 	if err := s.server.ListenAndServe(); err != nil {
 		if errors.Is(err, http.ErrServerClosed) {
 			return nil
 		}
-		return errors.InternalServer.Wrap(ctx, err,
-			errors.SkipThisCallOption(),
-		)
+		return errors.InternalServer.Wrap(err)
 	}
 	return nil
 }
