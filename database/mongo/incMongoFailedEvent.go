@@ -8,9 +8,9 @@ import (
 	"pkg/log"
 )
 
-func (m *Monitor) IncFailedEvent(ctx context.Context, evt *event.CommandFailedEvent) {
+func (m *Monitor) IncFailedEvent(_ context.Context, evt *event.CommandFailedEvent) {
 	if globalMetric.mongoCommandFailedMetric == nil {
-		log.Error(ctx, "mongoCommandFailedMetric prometheus metric not initialized")
+		log.Error("mongoCommandFailedMetric prometheus metric not initialized")
 		return
 	}
 

@@ -1,11 +1,10 @@
 package log
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"os"
-	"slices"
+	"sync/atomic"
 
 	"pkg/errors"
 	"pkg/log/buffer/buffer"
@@ -22,181 +21,106 @@ type consoleLog struct {
 
 var _ Handler = new(ConsoleHandler)
 
+func (h *ConsoleHandler) SetLogLevel(level LogLevel) {
+	h.logLevel.Store(level)
+}
+
+func (h *ConsoleHandler) GetLogLevel() LogLevel {
+	logLevel, ok := h.logLevel.Load().(LogLevel)
+	if !ok {
+		return ""
+	}
+	return logLevel
+}
+
 // ConsoleHandler - это версия обработчика журналов для печати
 // человекочитаемого формата в w.
 type ConsoleHandler struct {
-	logLevel LogLevel
+	logLevel atomic.Value
 	w        io.Writer
 }
 
-// NewConsoleHandler возвращает новый экземпляр ConsoleHandler.
-func NewConsoleHandler(w io.Writer, level LogLevel) *ConsoleHandler {
-	return &ConsoleHandler{
+// NewTextHandler возвращает новый экземпляр ConsoleHandler.
+func NewTextHandler(w io.Writer, level LogLevel) *ConsoleHandler {
+	h := &ConsoleHandler{
 		w:        w,
-		logLevel: level,
+		logLevel: atomic.Value{},
 	}
-}
-
-func (h *ConsoleHandler) getPath(skip int) (path string) {
-	stackTrace := stackTrace.GetStackTrace(skip + stackTrace.SkipPreviousCaller)
-	if len(stackTrace) > 0 {
-		path = stackTrace[0]
-	} else {
-		path = ""
-	}
-	return path
+	h.logLevel.Store(level)
+	return h
 }
 
 // handle реализует интерфейс Handler.
-func (h *ConsoleHandler) handle(ctx context.Context, level LogLevel, log any, opts ...Option) {
-	if h.logLevel > level {
+func (h *ConsoleHandler) handle(level LogLevel, log any, opts ...Option) {
+
+	if h.GetLogLevel().GreaterThan(level) {
 		return
 	}
 
 	state := newTextState(buffer.New())
 	defer state.buf.Free()
 
-	var consoleLogStruct consoleLog
+	var logStruct consoleLog
 
-	// Получаем опции лога
-	logOpts := mergeOptions(opts...)
+	optsStruct := mergeOptions(opts...)
 
-	// Получаем место, которое надо показать в логе
-	var path string
-
-	// Если лог является ошибкой
-	if v, ok := log.(error); ok {
-
-		//// Получаем путь из ошибки
-		customErr := errors.CastError(ctx, v)
+	switch v := log.(type) {
+	case error:
+		customErr := errors.CastError(v)
+		var path string
 		if len(customErr.StackTrace) > 0 {
 			path = customErr.StackTrace[0]
+		} else {
+			path = ""
 		}
-
-	} else { // Если лог другого типа
-
-		// Накидываем опции
-		skip := stackTrace.ThisCall
-		if logOpts.stackTraceSkip != nil {
-			skip = *logOpts.stackTraceSkip
-		}
-
-		// Получаем путь по стектрейсу
-		path = h.getPath(skip)
-	}
-
-	// Проверяем, не пустой ли путь
-	if path == "" {
-		logOpts.params["no_path_warn"] = "Не смогли получить путь для этого лога, ошибка при использовании log.Skip...Option()"
-	}
-
-	/*
-		// Проверяем, чтобы исключить логи из pkg пакета
-		if strings.Contains(path, "pkg") {
-			logOpts.params["pkg_warn"] = "Используется лог из pkg. Добавь log.Skip...Option() к вызову лога"
-		}
-	*/
-
-	// Собираем лог в зависимости от его типа
-	switch v := log.(type) {
-
-	case string: // Если передан обычный текст
-		consoleLogStruct = consoleLog{
-			Level:   level,
-			Message: v,
-			Path:    path,
-			Params:  logOpts.params,
-		}
-
-	case error: // Если передана ошибка
-		customErr := errors.CastError(ctx, v)
-		consoleLogStruct = consoleLog{
+		logStruct = consoleLog{
 			Level:   level,
 			Message: customErr.Error(),
 			Path:    path,
-			Params:  maps.Join(logOpts.params, customErr.Params),
+			Params:  maps.Join(optsStruct.params, customErr.Params),
 		}
-
-	default: // Если передан неизвестный тип данных
-
-		// Добавляем информацию о том, что такой тип не обслуживается
-		logOpts.params["error_no_processor"] = fmt.Sprintf("Processor jsonLog for type %T not implemented", log)
-
-		// Собираем лог ошибки, пытаясь все-таки показать исходный лог
-		consoleLogStruct = consoleLog{
-			Level:   LevelError,
-			Message: fmt.Sprintf("%v", log),
+	default:
+		stackTrace := stackTrace.GetStackTrace(errors.SkipPreviousCaller)
+		var path string
+		if len(stackTrace) > 0 {
+			path = stackTrace[0]
+		} else {
+			path = ""
+		}
+		logStruct = consoleLog{
+			Level:   level,
+			Message: fmt.Sprintf("%v", v),
 			Path:    path,
-			Params:  logOpts.params,
+			Params:  optsStruct.params,
 		}
 	}
 
-	// Собираем лог вручную
-	h.buildLogString(consoleLogStruct, state)
+	var delimer byte = ' '
 
-	// Пишем лог во Writer
+	state.buf.WriteString(getColor(level))
+
+	state.buf.WriteString(level.ToUpper())
+	state.buf.WriteString(colorReset)
+	state.buf.WriteByte(delimer)
+
+	state.buf.WriteString(logStruct.Path)
+	state.buf.WriteByte(delimer)
+	state.buf.WriteString(logStruct.Message)
+
+	for key, value := range logStruct.Params {
+		state.buf.WriteByte(' ')
+		state.buf.WriteString(getColor(level))
+		state.buf.WriteString(key)
+		state.buf.WriteString(colorReset)
+		state.buf.WriteByte('=')
+		state.buf.WriteString(value)
+	}
+
+	state.buf.WriteByte('\n')
+
 	_, err := state.buf.WriteTo(h.w)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "logging: could not write log: %s\n", err)
-	}
-}
-
-func (h *ConsoleHandler) buildLogString(log consoleLog, state textState) {
-
-	const spacer byte = ' '
-
-	// Окрашиваем и пишем тип лога
-	state.buf.WriteString(h.getColor(log.Level))
-	state.buf.WriteString(log.Level.ToUpper())
-	state.buf.WriteString(colorReset)
-	state.buf.WriteByte(spacer)
-
-	// Пишем путь до вызова лога/ошибки
-	state.buf.WriteString(log.Path)
-	state.buf.WriteByte(spacer)
-
-	// Пишем сообщение лога/ошибки
-	state.buf.WriteString(log.Message)
-
-	// Составляем массив ключей параметров
-	keys := maps.Keys(log.Params)
-
-	// Сортируем ключи в алфавитном порядке
-	slices.Sort(keys)
-
-	for _, key := range keys {
-
-		// Отступ
-		state.buf.WriteByte(' ')
-
-		// Окрашиваем в цвет лога и пишем ключ параметра
-		state.buf.WriteString(h.getColor(log.Level))
-		state.buf.WriteString(key)
-		state.buf.WriteString(colorReset)
-
-		// Пишем параметр
-		state.buf.WriteByte('=')
-		state.buf.WriteString(log.Params[key])
-	}
-
-	// Добавляем перенос строки
-	state.buf.WriteByte('\n')
-}
-
-func (h *ConsoleHandler) getColor(level LogLevel) string {
-	switch level {
-	case LevelFatal:
-		return colorPurple
-	case LevelError:
-		return colorRed
-	case LevelWarning:
-		return colorYellow
-	case LevelInfo:
-		return colorBlue
-	case LevelDebug:
-		return colorLightBlue
-	default:
-		return colorWhite
 	}
 }
 
@@ -206,4 +130,21 @@ type textState struct {
 
 func newTextState(b *buffer.Buffer) textState {
 	return textState{buf: b}
+}
+
+func getColor(level LogLevel) string {
+	switch level {
+	case LevelFatal:
+		return colorMagenta
+	case LevelError:
+		return colorRed
+	case LevelWarning:
+		return colorYellow
+	case LevelInfo:
+		return colorBlue
+	case LevelDebug:
+		return colorCyan
+	default:
+		return colorWhite
+	}
 }

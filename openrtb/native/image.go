@@ -7,10 +7,10 @@ type ImageRequest struct {
 	// Type ID of the image element supported by the publisher.
 	// The publisher can display this information in an appropriate
 	// format.
-	Type ImageType `json:"type"`
+	Type ImageType `json:"type,omitempty"`
 
 	// Width of the image in pixels.
-	Width int `json:"w"`
+	Width int `json:"w,omitempty"`
 
 	// The minimum requested width of the image in pixels.
 	//
@@ -21,10 +21,10 @@ type ImageRequest struct {
 	// requirement.
 	//
 	// Recommended.
-	WidthMin int `json:"wmin"`
+	WidthMin int `json:"wmin,omitempty"`
 
 	// Height of the image in pixels.
-	Height int `json:"h"`
+	Height int `json:"h,omitempty"`
 
 	// The minimum requested height of the image in pixels.
 	//
@@ -35,12 +35,12 @@ type ImageRequest struct {
 	// requirement.
 	//
 	// Recommended.
-	HeightMin int `json:"hmin"`
+	HeightMin int `json:"hmin,omitempty"`
 
 	// Whitelist of content MIME types supported.
 	//
 	// If blank, assume all types are allowed.
-	MIMEs []string `json:"mimes"`
+	MIMEs []string `json:"mimes,omitempty"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
 	Ext json.RawMessage `json:"ext,omitempty"`
@@ -55,7 +55,7 @@ type ImageResponse struct {
 	// Required: for assetsurl or dcourl responses.
 	//
 	// Not required: for embedded asset responses.
-	Type ImageType `json:"type"`
+	Type ImageType `json:"type,omitempty"`
 
 	// URL of the image asset
 	URL string `json:"url"`
@@ -66,7 +66,7 @@ type ImageResponse struct {
 	//
 	// Required: for assetsurl/dcourlresponses if multiple assets
 	// of same type submitted.
-	Width int `json:"w"`
+	Width int `json:"w,omitempty"`
 
 	// Height of the image in pixels.
 	//
@@ -74,7 +74,7 @@ type ImageResponse struct {
 	//
 	// Required: for assetsurl/dcourlresponses if multiple assets
 	// of same type submitted.
-	Height int `json:"h"`
+	Height int `json:"h,omitempty"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
 	Ext json.RawMessage `json:"ext,omitempty"`

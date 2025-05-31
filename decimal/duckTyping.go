@@ -14,7 +14,7 @@ import (
 func (d Decimal) MarshalBSONValue() (bsontype.Type, []byte, error) {
 	mongoDecimal128, err := primitive.ParseDecimal128(d.String())
 	if err != nil {
-		return bson.TypeDecimal128, nil, err
+		return bson.TypeDecimal128, nil, errors.InternalServer.Wrap(err)
 	}
 	return bson.MarshalValue(mongoDecimal128)
 }
@@ -22,16 +22,17 @@ func (d Decimal) MarshalBSONValue() (bsontype.Type, []byte, error) {
 func (d *Decimal) UnmarshalBSONValue(t bsontype.Type, value []byte) error {
 
 	if t != bson.TypeDecimal128 {
-		return errors.New("invalid bson value type")
+		return errors.InternalServer.New("invalid bson value type").
+			WithParams("type", t.String())
 	}
 	mongoDecimal128, _, ok := bsoncore.ReadDecimal128(value)
 	if !ok {
-		return errors.New("invalid bson string value")
+		return errors.InternalServer.New("invalid bson string value")
 	}
 
 	decimal, err := NewFromString(mongoDecimal128.String())
 	if err != nil {
-		return err
+		return errors.InternalServer.Wrap(err)
 	}
 
 	*d = decimal
@@ -43,7 +44,7 @@ func (d *Decimal) UnmarshalJSON(data []byte) (err error) {
 	return d.Decimal.UnmarshalJSON(data)
 }
 
-func (d *Decimal) MarshalJSON() ([]byte, error) {
+func (d Decimal) MarshalJSON() ([]byte, error) {
 	return d.Decimal.MarshalJSON()
 }
 

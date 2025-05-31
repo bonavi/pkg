@@ -27,20 +27,20 @@ type BidResponse struct {
 	SeatBids []SeatBid `json:"seatbid" bson:"seatbid"`
 
 	// Bidder generated response ID to assist with logging/tracking.
-	BidID string `json:"bidid" bson:"bidid"`
+	BidID string `json:"bidid,omitempty" bson:"bidid"`
 
 	// Bid currency using ISO-4217 alpha codes.
 	//
 	// Default USD.
-	Currency string `json:"cur" bson:"cur"`
+	Currency string `json:"cur,omitempty" bson:"cur"`
 
 	// Optional feature to allow a bidder to set data in the exchange’s cookie.
 	// The string must be in base85 cookie safe characters and be in any format.
 	// Proper JSON encoding must be used to include “escaped” quotation marks.
-	CustomData string `json:"customdata" bson:"customdata"`
+	CustomData string `json:"customdata,omitempty" bson:"customdata"`
 
 	// Reason for not bidding.
-	NBR NBR `json:"nbr" bson:"nbr"`
+	NBR NBR `json:"nbr,omitempty" bson:"nbr"`
 
 	// Placeholder for bidder-specific extensions to OpenRTB.
 	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`
@@ -85,8 +85,8 @@ func (r *BidResponse) Copy() BidResponse {
 		SeatBids:   seatBids,
 		BidID:      r.BidID,
 		Currency:   r.Currency,
-		CustomData: r.CustomData,
 		NBR:        r.NBR,
+		CustomData: r.CustomData,
 		Ext:        ext,
 	}
 }

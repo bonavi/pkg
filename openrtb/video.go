@@ -3,6 +3,8 @@ package openrtb
 import (
 	"encoding/json"
 	"errors"
+
+	"pkg/pointer"
 )
 
 // Validation errors.
@@ -21,77 +23,77 @@ type Video struct {
 	// Minimum video ad duration in seconds.
 	//
 	// Recommended.
-	MinDuration int `json:"minduration" bson:"minduration"`
+	MinDuration int `json:"minduration,omitempty" bson:"minduration"`
 
 	// Maximum video ad duration in seconds.
 	//
 	// Recommended.
-	MaxDuration int `json:"maxduration" bson:"maxduration"`
+	MaxDuration int `json:"maxduration,omitempty" bson:"maxduration"`
 
 	// Array of supported video protocols. At least one supported protocol must be specified
 	// in either the protocol or protocols attribute.
 	//
 	// Recommended.
-	Protocols []Protocol `json:"protocols" bson:"protocols"`
+	Protocols []Protocol `json:"protocols,omitempty" bson:"protocols"`
 
 	// Supported video protocol. At least one supported protocol must be specified in either
 	// the protocol or protocols attribute.
 	//
 	// Deprecated: deprecated in favor of protocols.
-	Protocol Protocol `json:"protocol" bson:"protocol"`
+	Protocol Protocol `json:"protocol,omitempty" bson:"protocol"`
 
 	// Width of the video player in device independent pixels (DIPS).
 	//
 	// Recommended.
-	Width int `json:"w" bson:"w"`
+	Width int `json:"w,omitempty" bson:"w"`
 
 	// Height of the video player in device independent pixels (DIPS).
 	//
 	// Recommended.
-	Height int `json:"h" bson:"h"`
+	Height int `json:"h,omitempty" bson:"h"`
 
 	// Indicates the start delay in seconds for pre-roll, mid-roll, or post-roll
 	// ad placements.
 	//
 	// Recommended.
-	StartDelay StartDelay `json:"startdelay" bson:"startdelay"`
+	StartDelay StartDelay `json:"startdelay,omitempty" bson:"startdelay"`
 
 	// Placement type for the impression.
-	Placement VideoPlacement `json:"placement" bson:"placement"`
+	Placement VideoPlacement `json:"placement,omitempty" bson:"placement"`
 
 	// Indicates if the impression must be linear, nonlinear, etc. If none specified,
 	// assume all are allowed.
 	//
 	// Default 1.
-	Linearity VideoLinearity `json:"linearity" bson:"linearity"`
+	Linearity VideoLinearity `json:"linearity,omitempty" bson:"linearity"`
 
 	// Indicates if the player will allow the video to be skipped, where:
 	//    0 = no;
 	//    1 = yes.
 	// If a bidder sends markup/creative that is itself skippable, the Bid object should
 	// include the attr array with an element of 16 indicating skippable video.
-	Skip CreativeAttribute `json:"skip" bson:"skip"`
+	Skip CreativeAttribute `json:"skip,omitempty" bson:"skip"`
 
 	// Videos of total duration greater than this number of seconds can be skippable;
 	// only applicable if the ad is skippable.
 	//
 	// Default 0.
-	SkipMin int `json:"skipmin" bson:"skipmin"`
+	SkipMin int `json:"skipmin,omitempty" bson:"skipmin"`
 
 	// Number of seconds a video must play before skipping is enabled; only applicable
 	// if the ad is skippable.
 	//
 	// Default 0.
-	SkipAfter int `json:"skipafter" bson:"skipafter"`
+	SkipAfter int `json:"skipafter,omitempty" bson:"skipafter"`
 
 	// If multiple ad impressions are offered in the same bid request, the sequence number
 	// will allow for the coordinated delivery of multiple creatives.
 	//
 	// Default 1.
-	Sequence int `json:"sequence" bson:"sequence"`
+	Sequence int `json:"sequence,omitempty" bson:"sequence"`
 
 	// Blocked creative attributes.
-	BlockedAttrs []CreativeAttribute `json:"battr" bson:"battr"`
+	BlockedAttrs []CreativeAttribute `json:"battr,omitempty" bson:"battr"`
 
 	// Maximum extended ad duration if extension is allowed.
 	//
@@ -101,13 +103,13 @@ type Video struct {
 	//
 	// If greater than 0, then the value represents the number of seconds
 	// of extended play supported beyond the maxduration value.
-	MaxExtended int `json:"maxextended" bson:"maxextended"`
+	MaxExtended int `json:"maxextended,omitempty" bson:"maxextended"`
 
 	// Minimum bit rate in Kbps.
-	MinBitrate int `json:"minbitrate" bson:"minbitrate"`
+	MinBitrate int `json:"minbitrate,omitempty" bson:"minbitrate"`
 
 	// Maximum bit rate in Kbps.
-	MaxBitrate int `json:"maxbitrate" bson:"maxbitrate"`
+	MaxBitrate int `json:"maxbitrate,omitempty" bson:"maxbitrate"`
 
 	// Indicates if letter-boxing of 4:3 content into a 16:9 window is allowed,
 	// where:
@@ -115,7 +117,7 @@ type Video struct {
 	//    1 = yes.
 	//
 	// Default 1.
-	BoxingAllowed int `json:"boxingallowed" bson:"boxingallowed"`
+	BoxingAllowed int `json:"boxingallowed,omitempty" bson:"boxingallowed"`
 
 	// Playback methods that may be in use.
 	//
@@ -124,26 +126,26 @@ type Video struct {
 	// Only one method is typically used in practice. As a result, this array may be
 	// converted to an integer in a future version of the specification. It is strongly
 	// advised to use only the first element of this array in preparation for this change.
-	PlaybackMethods []VideoPlayback `json:"playbackmethod" bson:"playbackmethod"`
+	PlaybackMethods []VideoPlayback `json:"playbackmethod,omitempty" bson:"playbackmethod"`
 
 	// The event that causes playback to end.
-	PlaybackEnd VideoCessation `json:"playbackend" bson:"playbackend"`
+	PlaybackEnd VideoCessation `json:"playbackend,omitempty" bson:"playbackend"`
 
 	// Supported delivery methods (e.g., streaming, progressive).
 	//
 	// If none specified, assume all are supported.
-	Delivery []ContentDelivery `json:"delivery" bson:"delivery"`
+	Delivery []ContentDelivery `json:"delivery,omitempty" bson:"delivery"`
 
 	// Ad position on screen
-	Position AdPosition `json:"pos" bson:"pos"`
+	Position AdPosition `json:"pos,omitempty" bson:"pos"`
 
 	// Array of Banner objects if companion ads are available.
-	CompanionAds []Banner `json:"companionad" bson:"companionad"`
+	CompanionAds []Banner `json:"companionad,omitempty" bson:"companionad"`
 
 	// List of supported API frameworks for this impression.
 	//
 	// If an API is not explicitly listed, it is assumed not to be supported.
-	APIs []APIFramework `json:"api" bson:"api"`
+	APIs []APIFramework `json:"api,omitempty" bson:"api"`
 
 	// Supported VAST companion ad types.
 	//
@@ -151,10 +153,24 @@ type Video struct {
 	//
 	// If one of these banners will be rendered as an end-card, this can be specified
 	// using the vcm attribute with the particular banner.
-	CompanionTypes []int `json:"companiontype" bson:"companiontype"`
+	CompanionTypes []int `json:"companiontype,omitempty" bson:"companiontype"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
-	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`
+	Ext *VideoExt `json:"ext,omitempty" bson:"ext"`
+}
+
+type VideoExt struct {
+	Reward    int    `json:"reward,omitempty"`
+	Rewarded  int    `json:"rewarded,omitempty"`
+	VideoType string `json:"videotype,omitempty"` // Содержит rewarded для некоторых запросов. Нужно преобразовывать в "Rewarded: 1"
+}
+
+func (b *VideoExt) copy() VideoExt {
+	return VideoExt{
+		Reward:    b.Reward,
+		Rewarded:  b.Rewarded,
+		VideoType: b.VideoType,
+	}
 }
 
 // Validate the video object.
@@ -256,10 +272,9 @@ func (v *Video) Copy() Video {
 		copy(companionTypes, v.CompanionTypes)
 	}
 
-	var ext []byte
-	if len(v.Ext) != 0 {
-		ext = make([]byte, len(v.Ext))
-		copy(ext, v.Ext)
+	var ext *VideoExt
+	if v.Ext != nil {
+		ext = pointer.Pointer(v.Ext.copy())
 	}
 
 	return Video{

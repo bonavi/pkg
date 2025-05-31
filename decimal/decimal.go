@@ -29,19 +29,16 @@ func Normalize(d decimal.Decimal) decimal.Decimal {
 
 func NewFromString(s string) (Decimal, error) {
 	d, err := decimal.NewFromString(s)
-	d = Normalize(d)
 	return Decimal{d}, err
 }
 
 func NewFromInt(i int) Decimal {
 	d := decimal.NewFromInt(int64(i))
-	d = Normalize(d)
 	return Decimal{d}
 }
 
 func NewFromFloat(i float64) Decimal {
 	d := decimal.NewFromFloat(i)
-	d = Normalize(d)
 	return Decimal{d}
 }
 
@@ -85,8 +82,9 @@ func (d Decimal) String() string {
 	return d.Decimal.String()
 }
 
-func (d Decimal) Float64() string {
-	return d.Decimal.String()
+func (d Decimal) Float64() float64 {
+	f, _ := d.Decimal.Float64()
+	return f
 }
 
 func (d Decimal) DeepEqual(d2 Decimal) bool {

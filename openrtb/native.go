@@ -12,15 +12,15 @@ type Native struct {
 	// Version of the Dynamic Native Ads API to which request complies.
 	//
 	// Highly recommended for efficient parsing.
-	Version string `json:"ver" bson:"ver"`
+	Version string `json:"ver,omitempty" bson:"ver"`
 
 	// List of supported API frameworks for this impression.
 	//
 	// If an API is not explicitly listed, it is assumed not to be supported.
-	APIs []APIFramework `json:"api" bson:"api"`
+	APIs []APIFramework `json:"api,omitempty" bson:"api"`
 
 	// Blocked creative attributes.
-	BlockedAttrs []CreativeAttribute `json:"battr" bson:"battr"`
+	BlockedAttrs []CreativeAttribute `json:"battr,omitempty" bson:"battr"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
 	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`

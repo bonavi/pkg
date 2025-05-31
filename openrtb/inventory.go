@@ -11,38 +11,38 @@ type Inventory struct {
 	// Exchange-specific app ID.
 	//
 	// Recommended.
-	ID string `json:"id" bson:"id"`
+	ID string `json:"id,omitempty" bson:"id"`
 
 	// App name (may be aliased at the publisher’s request).
-	Name string `json:"name" bson:"name"`
+	Name string `json:"name,omitempty" bson:"name"`
 
 	// Domain of the app (e.g., “mygame.foo.com”).
-	Domain string `json:"domain" bson:"domain"`
+	Domain string `json:"domain,omitempty" bson:"domain"`
 
 	// Array of IAB content categories of the app.
-	Categories []ContentCategory `json:"cat" bson:"cat"`
+	Categories []ContentCategory `json:"cat,omitempty" bson:"cat"`
 
 	// Array of IAB content categories that describe the current section of the app.
-	SectionCategories []ContentCategory `json:"sectioncat" bson:"sectioncat"`
+	SectionCategories []ContentCategory `json:"sectioncat,omitempty" bson:"sectioncat"`
 
 	// Array of IAB content categories that describe the current page or view of the app.
-	PageCategory []ContentCategory `json:"pagecat" bson:"pagecat"`
+	PageCategory []ContentCategory `json:"pagecat,omitempty" bson:"pagecat"`
 
 	// Indicates if the app has a privacy policy, where:
 	//    0 = no;
 	//    1 = yes.
-	PrivacyPolicy int `json:"privacypolicy" bson:"privacypolicy"`
+	PrivacyPolicy int `json:"privacypolicy,omitempty" bson:"privacypolicy"`
 
 	// Details about the Publisher of the app.
-	Publisher *Publisher `json:"publisher" bson:"publisher"`
+	Publisher *Publisher `json:"publisher,omitempty" bson:"publisher"`
 
 	// Details about the Content within the app.
-	Content *Content `json:"content" bson:"content"`
+	Content *Content `json:"content,omitempty" bson:"content"`
 
 	// Comma separated list of keywords about the app.
 	//
 	// FIXME: keywords can be a string or an array strings.
-	Keywords string `json:"keywords" bson:"keywords"`
+	Keywords string `json:"keywords,omitempty" bson:"keywords"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
 	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`
@@ -106,17 +106,17 @@ type App struct {
 	// A platform-specific application identifier intended to be unique to the app
 	// and independent of the exchange. On Android, this should be a bundle or package
 	// name (e.g., com.foo.mygame). On iOS, it is typically a numeric ID.
-	Bundle string `json:"bundle" bson:"bundle"`
+	Bundle string `json:"bundle,omitempty" bson:"bundle"`
 
 	// App store URL for an installed app; for IQG 2.1 compliance.
-	StoreURL string `json:"storeurl" bson:"storeurl"`
+	StoreURL string `json:"storeurl,omitempty" bson:"storeurl"`
 
 	// Application version.
-	Version string `json:"ver" bson:"ver"`
+	Version string `json:"ver,omitempty" bson:"ver"`
 
 	//    0 = app is free;
 	//    1 = the app is a paid version.
-	Paid int `json:"paid" bson:"paid"`
+	Paid int `json:"paid,omitempty" bson:"paid"`
 }
 
 func (a *App) Copy() App {
@@ -137,19 +137,19 @@ type Site struct {
 	Inventory
 
 	// URL of the page where the impression will be shown.
-	Page string `json:"page" bson:"page"`
+	Page string `json:"page,omitempty" bson:"page"`
 
 	// Referrer URL that caused navigation to the current page.
-	Refferer string `json:"ref" bson:"ref"`
+	Refferer string `json:"ref,omitempty" bson:"ref"`
 
 	// Search string that caused navigation to the current page.
-	Search string `json:"search" bson:"search"`
+	Search string `json:"search,omitempty" bson:"search"`
 
 	// Indicates if the site has been programmed to optimize layout when viewed on mobile
 	// devices, where:
 	//   0 = no;
 	//   1 = yes.
-	Mobile int `json:"mobile" bson:"mobile"`
+	Mobile int `json:"mobile,omitempty" bson:"mobile"`
 }
 
 func (s *Site) Copy() Site {

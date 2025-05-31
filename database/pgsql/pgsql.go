@@ -9,19 +9,8 @@ import (
 	"pkg/sql"
 )
 
-type PostgreSQLConfig struct {
-	Host     string `env:"PGSQL_HOST,required"`
-	User     string `env:"PGSQL_USER,required"`
-	Password string `env:"PGSQL_PASSWORD,required"`
-	Database string `env:"PGSQL_DATABASE,required"`
-}
-
-func (c *PostgreSQLConfig) getURL() string {
-	return fmt.Sprintf("postgres://%v:%v@%v/%v", c.User, c.Password, c.Host, c.Database)
-}
-
-func NewClientPgsql(ctx context.Context, conf PostgreSQLConfig) (*sql.DB, error) {
-	db, err := sql.Open(ctx, "pgx", conf.getURL())
+func NewClientPgsql(ctx context.Context, connectionURI string) (*sql.DB, error) {
+	db, err := sql.Open("pgx", connectionURI)
 	if err != nil {
 		return nil, err
 	}
@@ -41,4 +30,8 @@ func NewClientPgsql(ctx context.Context, conf PostgreSQLConfig) (*sql.DB, error)
 	}
 
 	return db.Unsafe(), nil
+}
+
+func GetConnectionURI(host, user, password, database string) string {
+	return fmt.Sprintf("postgres://%v:%v@%v/%v", user, password, host, database)
 }

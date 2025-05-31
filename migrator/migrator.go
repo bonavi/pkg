@@ -2,68 +2,52 @@ package migrator
 
 import (
 	"context"
+	"database/sql"
 	"embed"
+	"fmt"
 
 	"pkg/errors"
-	"pkg/sql"
+	"pkg/log"
 
 	"github.com/pressly/goose/v3"
 )
 
-type Migrator interface {
-	Up(context.Context) error
-	Down(context.Context) error
-}
-
-// Dialect is the type of database dialect.
-type Dialect string
-
-const (
-	DialectClickHouse Dialect = "clickhouse"
-	DialectMySQL      Dialect = "mysql"
-	DialectPostgres   Dialect = "postgres"
-	DialectSQLite3    Dialect = "sqlite3"
-	DialectYdB        Dialect = "ydb"
-)
-
 type MigratorConfig struct {
-	EmbedMigrations embed.FS // Встроенные файлы миграций
-	Dialect         Dialect  // Драйвер ex: clickhouse
-	Dir             string   // Путь к миграциям, так как embedding сохраняет структуру директорий
+	Conn            *sql.DB            // Подключение к базе данных
+	EmbedMigrations embed.FS           // Встроенные файлы миграций
+	Dialect         goose.Dialect      // Драйвер
+	Dir             string             // Путь к миграциям, так как embedding сохраняет структуру директорий
+	Migrations      []*goose.Migration // Миграции
 }
 
-type migrator struct {
-	cfg  MigratorConfig
-	conn *sql.DB
+type Migrator struct {
+	provider *goose.Provider
 }
 
-func NewMigrator(ctx context.Context, conn *sql.DB, config MigratorConfig) (Migrator, error) {
-
-	goose.SetBaseFS(config.EmbedMigrations)
-
-	goose.SetLogger(newMigratorLogger())
-
-	if err := goose.SetDialect(string(config.Dialect)); err != nil {
-		return nil, errors.InternalServer.Wrap(ctx, err)
+func NewMigrator(config MigratorConfig) (res Migrator, err error) {
+	provider, err := goose.NewProvider(config.Dialect, config.Conn, config.EmbedMigrations, goose.WithGoMigrations(config.Migrations...), goose.WithAllowOutofOrder(true))
+	if err != nil {
+		return res, errors.InternalServer.Wrap(err)
 	}
 
-	return migrator{
-		conn: conn,
-		cfg:  config,
+	return Migrator{
+		provider: provider,
 	}, nil
 }
 
-func (mg migrator) Up(ctx context.Context) error {
-	if err := goose.UpContext(ctx, mg.conn.DB.DB, mg.cfg.Dir); err != nil {
-		return errors.InternalServer.Wrap(ctx, err)
+func (m Migrator) Up(ctx context.Context) error {
+
+	result, err := m.provider.Up(ctx)
+	if err != nil {
+		return errors.InternalServer.Wrap(err)
 	}
 
-	return nil
-}
+	for _, r := range result {
+		if r.Error != nil {
+			return r.Error
+		}
 
-func (mg migrator) Down(ctx context.Context) error {
-	if err := goose.DownContext(ctx, mg.conn.DB.DB, mg.cfg.Dir); err != nil {
-		return errors.InternalServer.Wrap(ctx, err)
+		log.Info(fmt.Sprintf("migration %d applied", r.Source.Version))
 	}
 
 	return nil

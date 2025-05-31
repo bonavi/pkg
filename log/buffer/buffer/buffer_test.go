@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"pkg/log/buffer/buffer"
+	"pkg/testUtils"
 )
 
 func TestBuffer_new(t *testing.T) {
@@ -23,7 +24,7 @@ func TestBuffer(t *testing.T) {
 	t.Cleanup(b.Free)
 
 	b.WriteByte('1')
-	_, _ = b.Write([]byte(" 2 "))
+	testUtils.IgnoreErrorWithArgument(b.Write([]byte(" 2 ")))
 	b.WriteString("3 ")
 	b.WriteBool(true)
 	b.WriteByte(' ')

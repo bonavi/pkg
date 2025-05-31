@@ -28,25 +28,25 @@ type AssetRequest struct {
 	// without it).
 	//
 	// Default 0.
-	Required int `json:"required"`
+	Required int `json:"required,omitempty"`
 
 	// Title object for title assets.
 	//
 	// Recommended.
-	Title *TitleRequest `json:"title"`
+	Title *TitleRequest `json:"title,omitempty"`
 
 	// Image object for image assets.
 	//
 	// Recommended.
-	Image *ImageRequest `json:"img"`
+	Image *ImageRequest `json:"img,omitempty"`
 
 	// Video object for video assets.
-	Video *VideoRequest `json:"video"`
+	Video *VideoRequest `json:"video,omitempty"`
 
 	// Data object for brand name, description, ratings, prices etc.
 	//
 	// Recommended.
-	Data *DataRequest `json:"data"`
+	Data *DataRequest `json:"data,omitempty"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
 	Ext json.RawMessage `json:"ext,omitempty"`
@@ -107,32 +107,32 @@ type AssetResponse struct {
 	// Optional: if assetsurl/dcourl is being used.
 	//
 	// Required: if embedded asset is being used.
-	ID int `json:"id"`
+	ID int `json:"id,omitempty"`
 
 	// Set to 1 if asset is required (bidder requires it to be
 	// displayed).
 	//
 	// Default: 0.
-	Required int `json:"required"`
+	Required int `json:"required,omitempty"`
 
 	// Title object for title assets.
-	Title *TitleResponse `json:"title"`
+	Title *TitleResponse `json:"title,omitempty"`
 
 	// Image object for image assets.
-	Image *ImageResponse `json:"img"`
+	Image *ImageResponse `json:"img,omitempty"`
 
 	// Video object for video assets.
-	Video *VideoResponse `json:"video"`
+	Video *VideoResponse `json:"video,omitempty"`
 
 	// Data object for ratings, prices etc.
-	Data *DataResponse `json:"data"`
+	Data *DataResponse `json:"data,omitempty"`
 
 	// Link object for call to actions. The link object applies if
 	// the asset item is activated (clicked).
 	//
 	// If there is no link object on the asset, the parent link object
 	// on the bid response applies.
-	Link *Link `json:"link"`
+	Link *Link `json:"link,omitempty"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
 	Ext json.RawMessage `json:"ext,omitempty"`

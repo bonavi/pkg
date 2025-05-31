@@ -17,6 +17,7 @@ func NewListCache[V any](defaultTTL time.Duration) *ListCache[V] {
 		mu:         sync.RWMutex{},
 		items:      []V{},
 		defaultTTL: defaultTTL,
+		expiration: 0,
 	}
 }
 

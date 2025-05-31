@@ -7,7 +7,7 @@ import (
 	"pkg/database"
 	"pkg/sql"
 
-	_ "github.com/ClickHouse/clickhouse-go"
+	_ "github.com/ClickHouse/clickhouse-go/v2"
 )
 
 const (
@@ -17,15 +17,16 @@ const (
 )
 
 type ClickhouseConfig struct {
-	Host         string `env:"CLICKHOUSE_HOST,required"`
-	User         string `env:"CLICKHOUSE_USER,required"`
-	Password     string `env:"CLICKHOUSE_PASSWORD,required"`
-	DatabaseName string `env:"CLICKHOUSE_DATABASE,required"`
+	Host         string `env:"CLICKHOUSE_HOST"`
+	User         string `env:"CLICKHOUSE_USER"`
+	Password     string `env:"CLICKHOUSE_PASSWORD"`
+	DatabaseName string `env:"CLICKHOUSE_DATABASE"`
 }
 
 func NewClientClickhouse(config ClickhouseConfig) (*sql.DB, error) {
 
 	db, err := sql.Open("clickhouse", config.getConnectionURI())
+
 	if err != nil {
 		return nil, err
 	}
@@ -34,6 +35,7 @@ func NewClientClickhouse(config ClickhouseConfig) (*sql.DB, error) {
 	defer cancel()
 
 	if err = db.Ping(ctx); err != nil {
+
 		return nil, err
 	}
 
@@ -41,10 +43,10 @@ func NewClientClickhouse(config ClickhouseConfig) (*sql.DB, error) {
 }
 
 func (c *ClickhouseConfig) getConnectionURI() string {
-	return fmt.Sprintf("clickhouse://%s?username=%s&password=%s&database=%s&dial_timeout=%v&max_open_conns=%v&max_idle_conns=%v&conn_max_lifetime=%v&max_block_size=%v",
-		c.Host,
+	return fmt.Sprintf("clickhouse://%s:%s@%s/%s?dial_timeout=%v&max_open_conns=%v&max_idle_conns=%v&conn_max_lifetime=%v&max_block_size=%v",
 		c.User,
 		c.Password,
+		c.Host,
 		c.DatabaseName,
 		"1s",         // dial_timeout
 		maxOpenConns, // max_open_conns
@@ -52,4 +54,5 @@ func (c *ClickhouseConfig) getConnectionURI() string {
 		"1h",         // conn_max_lifetime
 		maxBlockSize, // max_block_size
 	)
+
 }

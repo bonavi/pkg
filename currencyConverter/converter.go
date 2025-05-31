@@ -9,17 +9,19 @@ import (
 const DefaultCurrency = "RUB"
 
 func Convert(price decimal.Decimal, fromCurrency, toCurrency string, rates map[string]decimal.Decimal) (decimal.Decimal, error) {
+
+	if fromCurrency == toCurrency {
+		return price, nil
+	}
+
 	// Проверяем, существуют ли курсы для обеих валют в мапе.
 	fromRate, ok1 := rates[fromCurrency]
 	toRate, ok2 := rates[toCurrency]
 	if !ok1 || !ok2 {
-		return decimal.Decimal{}, errors.InternalServer.New("Exchange rate for one of the currencies not found",
-			errors.ParamsOption(
-				"fromCurrency", fromCurrency,
-				"toCurrency", toCurrency,
-			),
-			errors.SkipThisCallOption(),
-		)
+		return decimal.Decimal{}, errors.InternalServer.New("Exchange rate for one of the currencies not found").WithParams(
+			"fromCurrency", fromCurrency,
+			"toCurrency", toCurrency,
+		).WithStackTraceJump(errors.SkipThisCall)
 	}
 
 	// Конвертируем цену в базовую валюту (USD)
@@ -33,17 +35,18 @@ func Convert(price decimal.Decimal, fromCurrency, toCurrency string, rates map[s
 
 func Coefficient(fromCurrency, toCurrency string, rates map[string]decimal.Decimal) (decimal.Decimal, error) {
 
+	if fromCurrency == toCurrency {
+		return decimal.NewFromInt(1), nil
+	}
+
 	// Проверяем, существуют ли курсы для обеих валют в мапе.
 	fromRate, ok1 := rates[fromCurrency]
 	toRate, ok2 := rates[toCurrency]
 	if !ok1 || !ok2 {
-		return decimal.Decimal{}, errors.InternalServer.New("Exchange rate for one of the currencies not found",
-			errors.ParamsOption(
-				"fromCurrency", fromCurrency,
-				"toCurrency", toCurrency,
-			),
-			errors.SkipThisCallOption(),
-		)
+		return decimal.Decimal{}, errors.InternalServer.New("Exchange rate for one of the currencies not found").WithParams(
+			"fromCurrency", fromCurrency,
+			"toCurrency", toCurrency,
+		).WithStackTraceJump(errors.SkipThisCall)
 	}
 
 	// Конвертируем курс валюты в коэффициент

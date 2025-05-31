@@ -1,91 +1,115 @@
 package errors
 
 import (
+	"context"
 	"fmt"
-
-	"pkg/pointer"
-	"pkg/stackTrace"
+	"maps"
 )
 
-type Option func(*options)
+type contextKey int
 
-type options struct {
-	// Дополнительные данные для добавления контекста ошибки и дополнительных данных
-	params map[string]string
-	// Параметр, указывающий, сколько вызовов стека относительно текущего вызова вверх пропустить
-	stackTrace *int
-	// Тип логирования
-	logAs *LogOption
-	// Текст для пользователя
-	HumanText string
-	// Дополнительная ошибка для errors.Is к исходной ошибке
-	errorf *error
-	// Параметр, указывающий, что тип ошибки затирать не надо при wrapping'е кастомной ошибки
-	dontEraseErrorType *struct{}
+const errorsParamsKey contextKey = 1
+
+type ErrorsParams struct {
+	data map[string]string
 }
 
-func ParamsOption(parameters ...any) Option {
+func GetErrorsParams(ctx context.Context) map[string]string {
 
-	// Создаем map из параметров
-	p := make(map[string]string)
+	errorsParams := make(map[string]string)
 
-	// Проходимся по параметрам
+	if ctx == nil {
+		return errorsParams
+	}
+
+	if paramsAny := ctx.Value(errorsParamsKey); paramsAny != nil {
+		if ep, ok := paramsAny.(ErrorsParams); ok {
+			errorsParams = maps.Clone(ep.data)
+		}
+	}
+	return errorsParams
+}
+
+func AddErrorsParams(ctx context.Context, paramsKV ...string) context.Context {
+	if len(paramsKV) == 0 {
+		return ctx
+	}
+
+	paramsCopy := maps.Clone(GetErrorsParams(ctx))
+
+	for i := 0; i < len(paramsKV); i += 2 {
+		if i+1 < len(paramsKV) {
+			paramsCopy[paramsKV[i]] = paramsKV[i+1]
+		} else {
+			paramsCopy[paramsKV[i]] = ""
+		}
+	}
+
+	return context.WithValue(ctx, errorsParamsKey, ErrorsParams{data: paramsCopy})
+}
+
+func (e Error) WithContextParams(ctx context.Context) Error {
+
+	// Получаем параметры из контекста
+	contextParams := GetErrorsParams(ctx)
+
+	if len(contextParams) == 0 {
+		return e
+	}
+
+	mergedParams := maps.Clone(e.Params)
+	maps.Copy(mergedParams, contextParams)
+	e.Params = mergedParams
+
+	return e
+}
+
+func (e Error) WithParams(parameters ...any) Error {
+
+	// Перебираем параметры и кладем их в мапу
 	for i := 0; i < len(parameters); i += 2 {
-
-		// Добавляем параметры в map, каждый четный параметр - ключ, каждый нечетный - значение
-		p[fmt.Sprintf("%v", parameters[i])] = fmt.Sprintf("%v", parameters[i+1])
+		e.Params[fmt.Sprintf("%v", parameters[i])] = fmt.Sprintf("%v", parameters[i+1])
 	}
 
-	// Проверяем, если количество параметров нечетное, то добавляем в map ключ с текстом "param not found"
 	if len(parameters)%2 != 0 {
-		p[fmt.Sprintf("%v", parameters[len(parameters)-1])] = "param not found"
+		e.Params[fmt.Sprintf("%v", parameters[len(parameters)-1])] = ""
 	}
 
-	return func(o *options) { o.params = p }
+	return e
 }
 
-func SkipThisCallOption() Option {
-	return func(o *options) { o.stackTrace = pointer.Pointer(stackTrace.SkipThisCall) }
-}
+func (e Error) WithStackTraceJump(p int) Error {
 
-func SkipPreviousCallerOption() Option {
-	return func(o *options) { o.stackTrace = pointer.Pointer(stackTrace.SkipPreviousCaller) }
-}
+	// Если стектрейс записан и его длина больше скипа
+	if e.StackTrace != nil && len(e.StackTrace) > p {
 
-func Skip2PreviousCallersOption() Option {
-	return func(o *options) { o.stackTrace = pointer.Pointer(stackTrace.Skip2PreviousCallers) }
-}
-
-func LogAsOption(p LogOption) Option {
-	return func(o *options) { o.logAs = &p }
-}
-
-func HumanTextOption(p string, args ...any) Option {
-	humanText := fmt.Sprintf(p, args...)
-	return func(o *options) { o.HumanText = humanText }
-}
-
-func ErrorfOption(err error) Option {
-	return func(o *options) { o.errorf = &err }
-}
-
-func DontEraseErrorType() Option {
-	return func(o *options) { o.dontEraseErrorType = &struct{}{} }
-}
-
-func mergeOptions(opts ...Option) options {
-	var options = &options{
-		params:             nil,
-		stackTrace:         nil,
-		logAs:              nil,
-		HumanText:          "",
-		dontEraseErrorType: nil,
-		errorf:             nil,
+		// Удаляем первые p элементов стектрейса
+		e.StackTrace = e.StackTrace[p:]
 	}
 
-	for _, opt := range opts {
-		opt(options)
-	}
+	return e
+}
 
-	return *options
+func (e Error) WithLogOption(p LogOption) Error {
+
+	// Меняем способ логгирования этой ошибки
+	e.LogAs = p
+
+	return e
+}
+
+func (e Error) WithCustomHumanText(p string, args ...any) Error {
+
+	// Форматируем и помещаем в HumanText
+	e.HumanText = fmt.Sprintf(p, args...)
+
+	return e
+}
+
+func (e Error) WithAdditionalError(err error) Error {
+
+	// Добавляем дополнительную ошибку к этой через дефолтную обертку
+	e.Err = fmt.Errorf("%w: %w", e.Err, err)
+
+	return e
 }

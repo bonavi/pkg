@@ -1,40 +1,35 @@
 package validator
 
 import (
-	"context"
 	"reflect"
+	"strings"
 
 	"pkg/errors"
-	"pkg/stackTrace"
 )
 
 type validatorProtocol interface {
-	Validate(context.Context) error
+	Validate() error
 }
 
 // Validate валидирует полученную структуру по тегам в декларативном формате
-func Validate(ctx context.Context, data any) error {
+func Validate(data any) error {
 
 	// Валидируем структуру
-	if err := ZeroValue(ctx, data); err != nil {
-		return errors.BadRequest.Wrap(ctx, err,
-			errors.SkipThisCallOption(),
-		)
+	if err := ZeroValue(data); err != nil {
+		return errors.BadRequest.Wrap(err).WithStackTraceJump(errors.SkipThisCall)
 	}
 
 	// Если структура реализует интерфейс валидатора, то валидируем ее с помощью функции
 	if v, ok := data.(validatorProtocol); ok {
-		if err := v.Validate(ctx); err != nil {
-			return errors.BadRequest.Wrap(ctx, err,
-				errors.SkipThisCallOption(),
-			)
+		if err := v.Validate(); err != nil {
+			return errors.BadRequest.Wrap(err).WithStackTraceJump(errors.SkipThisCall)
 		}
 	}
 
 	return nil
 }
 
-func zeroValue(ctx context.Context, requestStruct any, tag string, depth int) (tags []string, err error) {
+func zeroValue(requestStruct any, tag string, depth int) (tags []string, err error) {
 
 	reflectValue := reflect.ValueOf(requestStruct)
 
@@ -47,9 +42,9 @@ func zeroValue(ctx context.Context, requestStruct any, tag string, depth int) (t
 		// Если передан указатель на структуру, разыменовываем
 		reflectValue = reflectValue.Elem()
 	default:
-		return tags, errors.InternalServer.New(ctx, "Интерфейс должен быть структурой или указателем на структуру",
-			errors.ParamsOption("Тип интерфейса", reflectValue.Kind().String()),
-			errors.SkipThisCallOption())
+		return tags, errors.InternalServer.New("Интерфейс должен быть структурой или указателем на структуру").
+			WithParams("Тип интерфейса", reflectValue.Kind().String()).
+			WithStackTraceJump(errors.SkipThisCall)
 	}
 
 	reflectType := reflectValue.Type()
@@ -67,13 +62,13 @@ func zeroValue(ctx context.Context, requestStruct any, tag string, depth int) (t
 		reqTag := typeField.Tag.Get("validate")
 
 		// Получаем тег json
-		jsTag := typeField.Tag.Get("json")
+		jsTag := typeField.Name
 
 		// Если поле равно нулю и тег validate = required
-		if valField.IsZero() && reqTag == "required" {
+		if valField.IsZero() && strings.Contains(reqTag, "required") {
 
 			if tag != "" {
-				tag += "."
+				jsTag = tag + "." + jsTag
 			}
 
 			tags = append(tags, jsTag)
@@ -91,7 +86,7 @@ func zeroValue(ctx context.Context, requestStruct any, tag string, depth int) (t
 			}
 
 			// Рекурсивно вызываем функцию для вложенной функции
-			_tags, err := zeroValue(ctx, tt, tag+jsTag, depth+1)
+			_tags, err := zeroValue(tt, tag+jsTag, depth+1)
 
 			// Если внутри структуры плохо
 			if err != nil {
@@ -106,8 +101,8 @@ func zeroValue(ctx context.Context, requestStruct any, tag string, depth int) (t
 	return tags, nil
 }
 
-func ZeroValue(ctx context.Context, requestStruct any) error {
-	tags, err := zeroValue(ctx, requestStruct, "", stackTrace.Skip2PreviousCallers)
+func ZeroValue(requestStruct any) error {
+	tags, err := zeroValue(requestStruct, "", errors.Skip2PreviousCallers)
 	if err != nil {
 		return err
 	}
@@ -117,9 +112,8 @@ func ZeroValue(ctx context.Context, requestStruct any) error {
 		for _, tag := range tags {
 			params = append(params, tag, "required")
 		}
-		return errors.BadRequest.New(ctx, "Required field is not filled",
-			errors.ParamsOption(params...),
-		)
+		return errors.BadRequest.New("Required field is not filled").
+			WithParams(params...)
 	}
 
 	return nil

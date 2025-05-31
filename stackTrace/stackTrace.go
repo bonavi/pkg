@@ -4,31 +4,37 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
-)
-
-const (
-	ThisCall = iota + 1
-	SkipThisCall
-	SkipPreviousCaller
-	Skip2PreviousCallers
-	Skip3PreviousCallers
+	"sync/atomic"
 )
 
 type stackTracer struct {
 	serviceName string
+	isEnabled   atomic.Bool
 }
 
 var stackTracerInstance = &stackTracer{
 	serviceName: "",
 }
 
-func Init(serviceName string) {
+func SetIsEnabled(enabled bool) {
+	stackTracerInstance.isEnabled.Store(enabled)
+}
+
+func Init(serviceName string, isEnabled bool) {
 	stackTracerInstance = &stackTracer{
 		serviceName: serviceName,
+		isEnabled:   atomic.Bool{},
 	}
+
+	stackTracerInstance.isEnabled.Store(isEnabled)
 }
 
 func GetStackTrace(skip int) []string {
+
+	if !stackTracerInstance.isEnabled.Load() {
+		return nil
+	}
+
 	var pcs [32]uintptr
 	n := runtime.Callers(0, pcs[:])
 	var path []string

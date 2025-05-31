@@ -1,6 +1,8 @@
 package slices
 
 import (
+	"fmt"
+
 	"pkg/errors"
 )
 
@@ -15,15 +17,28 @@ func ToMap[K comparable, V any](slice []V, field func(V) K) map[K]V {
 	return mapBySlice
 }
 
+func ToMapSlices[K comparable, V any](slice []V, field func(V) K) map[K][]V {
+	mapBySlice := make(map[K][]V, len(slice))
+	for _, v := range slice {
+		mapBySlice[field(v)] = append(mapBySlice[field(v)], v)
+	}
+	return mapBySlice
+}
+
 // GetFields возвращает массив значений полей из массива структур
 // Example:
 // AccountGroupsIDs := slice.GetFields(_accountGroups, func(ag model.AccountGroup) uint32 { return ag.ID })
-func GetFields[K comparable, V any](slice []V, field func(V) K) []K {
+func GetFields[K, V any](slice []V, field func(V) K) []K {
 	fields := make([]K, 0, len(slice))
 	for _, v := range slice {
 		fields = append(fields, field(v))
 	}
 	return fields
+}
+
+// Map это синоним GetFields
+func Map[K, V any](slice []V, field func(V) K) []K {
+	return GetFields(slice, field)
 }
 
 // GetUniqueFields возвращает массив уникальных значений полей из массива структур
@@ -100,7 +115,7 @@ func First[T any](array []T) (value T, err error) {
 	// Если массив пустой
 	if len(array) == 0 {
 		// Возвращаем ошибку
-		return value, ErrSliceIsEmpty
+		return value, errors.NotFound.Wrap(ErrSliceIsEmpty).WithParams("Type", fmt.Sprintf("%T", value))
 	}
 	// Возвращаем первый элемент массива
 	return array[0], nil
@@ -141,10 +156,10 @@ func Contains[T comparable](slice []T, value T) bool {
 	return false
 }
 
-// ContainsSlice проверяет, содержатся ли все значения target в массиве slice, используя мапу для быстрого поиска.
+// ContainsAll проверяет, содержатся ли все значения target в массиве slice, используя мапу для быстрого поиска.
 // Пример использования:
 // isPresent := slice.Contains([]int{1, 2, 3}, 1, 2)
-func ContainsSlice[T comparable](slice []T, target ...T) bool {
+func ContainsAll[T comparable](slice []T, target ...T) bool {
 
 	sliceMap := GetMapValueStruct(slice, func(v T) T { return v })
 
@@ -158,6 +173,22 @@ func ContainsSlice[T comparable](slice []T, target ...T) bool {
 	}
 
 	return true
+}
+
+func ContainsAny[T comparable](slice []T, target ...T) bool {
+
+	sliceMap := GetMapValueStruct(slice, func(v T) T { return v })
+
+	// Проходимся по каждому элементу
+	for _, v := range target {
+
+		// Если элемент найден
+		if _, ok := sliceMap[v]; ok {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Filter возвращает массив, содержащий только те элементы, которые удовлетворяют условию

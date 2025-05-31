@@ -1065,9 +1065,9 @@ func TestContainsSlice(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ContainsSlice(tt.args.slice, tt.args.target...)
+			got := ContainsAll(tt.args.slice, tt.args.target...)
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ContainsSlice() = %v, want %v", got, tt.want)
+				t.Errorf("ContainsAll() = %v, want %v", got, tt.want)
 			}
 		})
 	}

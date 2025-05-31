@@ -22,13 +22,13 @@ type SeatBid struct {
 	Bids []Bid `json:"bid" bson:"bid"`
 
 	// ID of the buyer seat (e.g., advertiser, agency) on whose behalf this bid is made.
-	Seat string `json:"seat" bson:"seat"`
+	Seat string `json:"seat,omitempty" bson:"seat"`
 
 	//    0 = impressions can be won individually;
 	//    1 = impressions must be won or lost as a group.
 	//
 	// Default 0.
-	Group int `json:"group" bson:"group"`
+	Group int `json:"group,omitempty" bson:"group"`
 
 	// Placeholder for bidder-specific extensions to OpenRTB.
 	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`

@@ -72,7 +72,7 @@ func ReadDir(dir string) (*Files, error) {
 
 		name := entry.Name()
 
-		data, err := os.ReadFile(filepath.Join(dir, name))
+		data, err := os.ReadFile(filepath.Join(dir, name)) //nolint:gosec
 		if err != nil {
 			return nil, err
 		}

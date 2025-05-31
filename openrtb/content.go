@@ -9,10 +9,10 @@ import (
 // Details about the published content itself, within which the ad will be shown.
 type Content struct {
 	// ID uniquely identifying the content.
-	ID string `json:"id" bson:"id"`
+	ID string `json:"id,omitempty" bson:"id"`
 
 	// Episode number.
-	Episode int `json:"episode" bson:"episode"`
+	Episode int `json:"episode,omitempty" bson:"episode"`
 
 	// Content title.
 	//
@@ -21,7 +21,7 @@ type Content struct {
 	//
 	// Non-Video Example: “Why an Antarctic Glacier Is Melting So Quickly”
 	// (Time magazine article).
-	Title string `json:"title" bson:"title"`
+	Title string `json:"title,omitempty" bson:"title"`
 
 	// Content series.
 	//
@@ -29,77 +29,77 @@ type Content struct {
 	// or “Arby ‘N’ The Chief” (made for web).
 	//
 	// Non-Video Example: “Ecocentric” (Time Magazine blog).
-	Series string `json:"series" bson:"series"`
+	Series string `json:"series,omitempty" bson:"series"`
 
 	// Content season (e.g., “Season 3”).
-	Season string `json:"season" bson:"season"`
+	Season string `json:"season,omitempty" bson:"season"`
 
 	// Artist credited with the content.
-	Artist string `json:"artist" bson:"artist"`
+	Artist string `json:"artist,omitempty" bson:"artist"`
 
 	// Genre that best describes the content (e.g., rock, pop, etc).
-	Genre string `json:"genre" bson:"genre"`
+	Genre string `json:"genre,omitempty" bson:"genre"`
 
 	// Album to which the content belongs; typically for audio.
-	Album string `json:"album" bson:"album"`
+	Album string `json:"album,omitempty" bson:"album"`
 
 	// International Standard Recording Code conforming to ISO-3901.
-	ISRC string `json:"isrc" bson:"isrc"`
+	ISRC string `json:"isrc,omitempty" bson:"isrc"`
 
 	// Details about the content Producer.
-	Producer *Producer `json:"producer" bson:"producer"`
+	Producer *Producer `json:"producer,omitempty" bson:"producer"`
 
 	// URL of the content, for buy-side contextualization or review.
-	URL string `json:"url" bson:"url"`
+	URL string `json:"url,omitempty" bson:"url"`
 
 	// Array of IAB content categories that describe the content producer.
-	Categories []ContentCategory `json:"cat" bson:"cat"`
+	Categories []ContentCategory `json:"cat,omitempty" bson:"cat"`
 
 	// Production quality.
-	ProductionQuality ProductionQuality `json:"prodq" bson:"prodq"`
+	ProductionQuality ProductionQuality `json:"prodq,omitempty" bson:"prodq"`
 
 	// Video quality.
 	//
 	// Deprecated: deprecated in favor of prodq.
-	VideoQuality ProductionQuality `json:"videoquality" bson:"videoquality"`
+	VideoQuality ProductionQuality `json:"videoquality,omitempty" bson:"videoquality"`
 
 	// Type of content (game, video, text, etc.).
-	Context ContentContext `json:"context" bson:"context"`
+	Context ContentContext `json:"context,omitempty" bson:"context"`
 
 	// Content rating (e.g., MPAA).
-	ContentRating string `json:"contentrating" bson:"contentrating"`
+	ContentRating string `json:"contentrating,omitempty" bson:"contentrating"`
 
 	// User rating of the content (e.g., number of stars, likes, etc.).
-	UserRating string `json:"userrating" bson:"userrating"`
+	UserRating string `json:"userrating,omitempty" bson:"userrating"`
 
 	// Media rating per IQG guidelines.
-	MediaRating IQGRating `json:"qagmediarating" bson:"qagmediarating"`
+	MediaRating IQGRating `json:"qagmediarating,omitempty" bson:"qagmediarating"`
 
 	// Comma separated list of keywords describing the content.
 	//
 	// FIXME: keywords can be a string or an array strings.
-	Keywords string `json:"keywords" bson:"keywords"`
+	Keywords string `json:"keywords,omitempty" bson:"keywords"`
 
 	// 0 = not live, 1 = content is live (e.g., stream, live blog).
-	LiveStream int `json:"livestream" bson:"livestream"`
+	LiveStream int `json:"livestream,omitempty" bson:"livestream"`
 
 	// 0 = indirect, 1 = direct.
-	SourceRelationship int `json:"sourcerelationship" bson:"sourcerelationship"`
+	SourceRelationship int `json:"sourcerelationship,omitempty" bson:"sourcerelationship"`
 
 	// Length of content in seconds; appropriate for video or audio.
-	Length int `json:"len" bson:"len"`
+	Length int `json:"len,omitempty" bson:"len"`
 
 	// Content language using ISO-639-1-alpha-2.
-	Language string `json:"language" bson:"language"`
+	Language string `json:"language,omitempty" bson:"language"`
 
 	// Indicator of whether or not the content is embeddable (e.g., an embeddable video player),
 	// where:
 	//   0 = no;
 	//   1 = yes.
-	Embeddable int `json:"embeddable" bson:"embeddable"`
+	Embeddable int `json:"embeddable,omitempty" bson:"embeddable"`
 
 	// Additional content data. Each Data object represents a different data source.
-	Data []Data `json:"data" bson:"data"`
+	Data []Data `json:"data,omitempty" bson:"data"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
 	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`

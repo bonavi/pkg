@@ -14,8 +14,8 @@ const gracefulShutdownDelay = 2 * time.Second
 func AddGracefulShutdownErrGroup(
 	serversErrWg *errgroup.Group,
 	ctx context.Context,
-	httpServer *fiber.App,
-	grpcServer *grpc.Server,
+	httpServers []*fiber.App,
+	grpcServers []*grpc.Server,
 ) {
 
 	// Создаем горутину, которая слушает основной контекст приложения, который завершается по сигналу от ОС +
@@ -29,10 +29,10 @@ func AddGracefulShutdownErrGroup(
 		time.Sleep(gracefulShutdownDelay)
 
 		// Плавно завершаем работу серверов
-		if httpServer != nil {
+		for _, httpServer := range httpServers {
 			_ = httpServer.ShutdownWithContext(ctx)
 		}
-		if grpcServer != nil {
+		for _, grpcServer := range grpcServers {
 			grpcServer.GracefulStop()
 		}
 

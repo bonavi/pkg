@@ -7,14 +7,14 @@ type NativeResponse struct {
 	// Version of the Native Markup version in use.
 	//
 	// Default: 1.2.
-	Ver string `json:"ver"`
+	Ver string `json:"ver,omitempty"`
 
 	// List of Native Ad’s assets.
 	//
 	// Required: if no assetsurl.
 	//
 	// Recommended: as fallback even if assetsurl is provided.
-	Assets []AssetResponse `json:"assets"`
+	Assets []AssetResponse `json:"assets,omitempty"`
 
 	// URL of an alternate source for the assets object.
 	//
@@ -31,7 +31,7 @@ type NativeResponse struct {
 	// the final actual call should come from the client device from
 	// which the ad will be rendered to give the buyer the benefit of
 	// the cookies and header data available in that context.
-	AssetsURL string `json:"assetsurl"`
+	AssetsURL string `json:"assetsurl,omitempty"`
 
 	// URL where a dynamic creative specification may be found for
 	// populating this ad, per the Dynamic Content Ads Specification.
@@ -43,7 +43,7 @@ type NativeResponse struct {
 	// revision of the Dynamic Content Ads spec.
 	//
 	// Where present, overrides the asset object in the response.
-	DynamicContentURL string `json:"dcourl"`
+	DynamicContentURL string `json:"dcourl,omitempty"`
 
 	// This is default link object for the Native Ad.
 	//
@@ -59,7 +59,7 @@ type NativeResponse struct {
 	// party trackers.
 	//
 	// Deprecated: since version 1.2.
-	ImpTrackers []string `json:"imptrackers"`
+	ImpTrackers []string `json:"imptrackers,omitempty"`
 
 	// Optional JavaScript impression tracker.
 	//
@@ -70,15 +70,15 @@ type NativeResponse struct {
 	// supported.
 	//
 	// Deprecated: since version 1.2.
-	JSTracker string `json:"jstracker"`
+	JSTracker string `json:"jstracker,omitempty"`
 
 	// Array of tracking objects to run with the ad, in response to
 	// the declared supported methods in the request.
-	EventTrackers []EventTrackerResponse `json:"eventtrackers"`
+	EventTrackers []EventTrackerResponse `json:"eventtrackers,omitempty"`
 
 	// If support was indicated in the request, URL of a page informing
 	// the user about the buyer’s targeting activity.
-	Privacy string `json:"privacy"`
+	Privacy string `json:"privacy,omitempty"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
 	Ext json.RawMessage `json:"ext,omitempty"`

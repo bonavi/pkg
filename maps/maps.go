@@ -1,6 +1,16 @@
 package maps
 
-import "pkg/errors"
+import "errors"
+
+func Filter[K comparable, V any](mapa map[K]V, predicate func(K, V) bool) map[K]V {
+	filteredMap := make(map[K]V, len(mapa))
+	for k, v := range mapa {
+		if predicate(k, v) {
+			filteredMap[k] = v
+		}
+	}
+	return filteredMap
+}
 
 func Values[K comparable, V any](mapa map[K]V) []V {
 	slice := make([]V, 0, len(mapa))
@@ -36,12 +46,14 @@ func Join[K comparable, V any](leftMap, rightMap map[K]V) map[K]V {
 func Revert[K comparable, V comparable](mapa map[K]V) (map[V]K, error) {
 	revertMap := make(map[V]K, len(mapa))
 
+	var err error
+
 	for k, v := range mapa {
 		if _, ok := revertMap[v]; ok {
-			return nil, errors.New("value is not unique")
+			err = errors.New("value is not unique")
 		}
 		revertMap[v] = k
 	}
 
-	return revertMap, nil
+	return revertMap, err
 }

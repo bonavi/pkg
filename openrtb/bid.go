@@ -1,10 +1,11 @@
 package openrtb
 
 import (
-	"encoding/json"
 	"errors"
 
 	"pkg/decimal"
+	"pkg/openrtb/ord"
+	"pkg/pointer"
 )
 
 // Validation errors.
@@ -42,96 +43,112 @@ type Bid struct {
 	// Win notice URL called by the exchange if the bid wins (not necessarily indicative
 	// of a delivered, viewed, or billable ad); optional means of serving ad markup.
 	// Substitution macros may be included in both the URL and optionally returned markup.
-	NoticeURL string `json:"nurl" bson:"nurl"`
+	NoticeURL string `json:"nurl,omitempty" bson:"nurl"`
 
 	// Billing notice URL called by the exchange when a winning bid becomes billable based
 	// on exchange-specific business policy (e.g., typically delivered, viewed, etc.).
 	// Substitution macros may be included.
-	BillingURL string `json:"burl" bson:"burl"`
+	BillingURL string `json:"burl,omitempty" bson:"burl"`
 
 	// Loss notice URL called by the exchange when a bid is known to have been lost.
 	// Substitution macros may be included. Exchange-specific policy may preclude support for
 	// loss notices or the disclosure of winning clearing prices resulting in ${AUCTION_PRICE}
 	// macros being removed (i.e., replaced with a zero-length string).
-	LossURL string `json:"lurl" bson:"lurl"`
+	LossURL string `json:"lurl,omitempty" bson:"lurl"`
 
 	// Optional means of conveying ad markup in case the bid wins; supersedes the win notice
 	// if markup is included in both. Substitution macros may be included.
-	AdMarkup string `json:"adm" bson:"adm"`
+	AdMarkup string `json:"adm,omitempty" bson:"adm"`
 
 	// ID of a preloaded ad to be served if the bid wins.
-	AdID string `json:"adid" bson:"adid"`
+	AdID string `json:"adid,omitempty" bson:"adid"`
 
 	// Advertiser domain for block list checking (e.g., “ford.com”). This can be an array of
 	// for the case of rotating creatives. Exchanges can mandate that only one domain is allowed.
-	AdvDomains []string `json:"adomain" bson:"adomain"`
+	AdvDomains []string `json:"adomain,omitempty" bson:"adomain"`
 
 	// A platform-specific application identifier intended to be unique to the app and independent
 	// of the exchange. On Android, this should be a bundle or package name (e.g., com.foo.mygame).
 	// On iOS, it is a numeric ID.
-	Bundle string `json:"bundle" bson:"bundle"`
+	Bundle string `json:"bundle,omitempty" bson:"bundle"`
 
 	// URL without cache-busting to an image that is representative of the content of the campaign
 	// for ad quality/safety checking.
-	ImageURL string `json:"iurl" bson:"iurl"`
+	ImageURL string `json:"iurl,omitempty" bson:"iurl"`
 
 	// Campaign ID to assist with ad quality checking; the collection of creatives for which iurl
 	// should be representative.
-	CampaingID string `json:"cid" bson:"cid"`
+	CampaingID string `json:"cid,omitempty" bson:"cid"`
 
 	// Creative ID to assist with ad quality checking.
-	CreativeID string `json:"crid" bson:"crid"`
+	CreativeID string `json:"crid,omitempty" bson:"crid"`
 
 	// Tactic ID to enable buyers to label bids for reporting to the exchange the tactic through
 	// which their bid was submitted. The specific usage and meaning of the tactic ID should be
 	// communicated between buyer and exchanges a priori.
-	Tactic string `json:"tactic" bson:"tactic"`
+	Tactic string `json:"tactic,omitempty" bson:"tactic"`
 
 	// IAB content categories of the creative.
-	Categories []ContentCategory `json:"cat" bson:"cat"`
+	Categories []ContentCategory `json:"cat,omitempty" bson:"cat"`
 
 	// Set of attributes describing the creative.
-	Attrs []CreativeAttribute `json:"attr" bson:"attr"`
+	Attrs []CreativeAttribute `json:"attr,omitempty" bson:"attr"`
 
 	// API required by the markup if applicable.
-	API APIFramework `json:"api" bson:"api"`
+	API APIFramework `json:"api,omitempty" bson:"api"`
 
 	// Video response protocol of the markup if applicable.
 	Protocol Protocol `json:"protocol" bson:"protocol"`
 
 	// Creative media rating per IQG guidelines.
-	MediaRating IQGRating `json:"qagmediarating" bson:"qagmediarating"`
+	MediaRating IQGRating `json:"qagmediarating,omitempty" bson:"qagmediarating"`
 
 	// Language of the creative using ISO-639-1-alpha-2. The nonstandard code “xx” may also be
 	// used if the creative has no linguistic content (e.g., a banner with just a company logo).
-	Language string `json:"language" bson:"language"`
+	Language string `json:"language,omitempty" bson:"language"`
 
 	// Reference to the deal.id from the bid request if this bid pertains to a private
 	// marketplace direct deal.
-	DealID string `json:"dealid" bson:"dealid"`
+	DealID string `json:"dealid,omitempty" bson:"dealid"`
 
 	// Width of the creative in device independent pixels (DIPS).
-	Width int `json:"w" bson:"w"`
+	Width int `json:"w,omitempty" bson:"w"`
 
 	// Height of the creative in device independent pixels (DIPS).
-	Height int `json:"h" bson:"h"`
+	Height int `json:"h,omitempty" bson:"h"`
 
 	// Relative width of the creative when expressing size as a ratio.
 	//
 	// Required for Flex Ads.
-	WidthRatio int `json:"wratio" bson:"wratio"`
+	WidthRatio int `json:"wratio,omitempty" bson:"wratio"`
 
 	// Relative height of the creative when expressing size as a ratio.
 	//
 	// Required for Flex Ads.
-	HeightRatio int `json:"hratio" bson:"hratio"`
+	HeightRatio int `json:"hratio,omitempty" bson:"hratio"`
 
 	// Advisory as to the number of seconds the bidder is willing to wait between the auction
 	// and the actual impression.
-	Exp int `json:"exp" bson:"exp"`
+	Exp int `json:"exp,omitempty" bson:"exp"`
 
 	// Placeholder for bidder-specific extensions to OpenRTB.
-	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`
+	Ext *BidExt `json:"ext,omitempty" bson:"ext"`
+}
+
+type BidExt struct {
+	Nroa *ord.Nroa `json:"nroa,omitempty" bson:"nroa"`
+}
+
+func (b *BidExt) copy() BidExt {
+
+	var nroa *ord.Nroa
+	if b.Nroa != nil {
+		nroa = pointer.Pointer(b.Nroa.Copy())
+	}
+
+	return BidExt{
+		Nroa: nroa,
+	}
 }
 
 // Validate required attributes.
@@ -164,10 +181,9 @@ func (b *Bid) Copy() Bid {
 		copy(attrs, b.Attrs)
 	}
 
-	var ext []byte
-	if len(b.Ext) != 0 {
-		ext = make([]byte, len(b.Ext))
-		copy(ext, b.Ext)
+	var ext *BidExt
+	if b.Ext != nil {
+		ext = pointer.Pointer(b.Ext.copy())
 	}
 
 	return Bid{

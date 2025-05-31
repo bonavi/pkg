@@ -21,29 +21,29 @@ type Audio struct {
 	// Minimum audio ad duration in seconds.
 	//
 	// Recommended.
-	MinDuration int `json:"minduration" bson:"minduration"`
+	MinDuration int `json:"minduration,omitempty" bson:"minduration"`
 
 	// Maximum audio ad duration in seconds.
 	//
 	// Recommended.
-	MaxDuration int `json:"maxduration" bson:"maxduration"`
+	MaxDuration int `json:"maxduration,omitempty" bson:"maxduration"`
 
 	// Array of supported audio protocols.
-	Protocols []Protocol `json:"protocols" bson:"protocols"`
+	Protocols []Protocol `json:"protocols,omitempty" bson:"protocols"`
 
 	// Indicates the start delay in seconds for pre-roll, mid-roll, or post-roll ad placements.
 	//
 	// Recommended.
-	StartDelay StartDelay `json:"startdelay" bson:"startdelay"`
+	StartDelay StartDelay `json:"startdelay,omitempty" bson:"startdelay"`
 
 	// If multiple ad impressions are offered in the same bid request, the sequence number
 	// will allow for the coordinated delivery of multiple creatives.
 	//
 	// Default 1.
-	Sequence int `json:"sequence" bson:"sequence"`
+	Sequence int `json:"sequence,omitempty" bson:"sequence"`
 
 	// Blocked creative attributes
-	BlockedAttrs []CreativeAttribute `json:"battr" bson:"battr"`
+	BlockedAttrs []CreativeAttribute `json:"battr,omitempty" bson:"battr"`
 
 	// Maximum extended ad duration if extension is allowed.
 	//
@@ -53,44 +53,44 @@ type Audio struct {
 	//
 	// If greater than 0, then the value represents the number of seconds of extended
 	// play supported beyond the maxduration value.
-	MaxExtended int `json:"maxextended" bson:"maxextended"`
+	MaxExtended int `json:"maxextended,omitempty" bson:"maxextended"`
 
 	// Minimum bit rate in Kbps.
-	MinBitrate int `json:"minbitrate" bson:"minbitrate"`
+	MinBitrate int `json:"minbitrate,omitempty" bson:"minbitrate"`
 
 	// Maximum bit rate in Kbps.
-	MaxBitrate int `json:"maxbitrate" bson:"maxbitrate"`
+	MaxBitrate int `json:"maxbitrate,omitempty" bson:"maxbitrate"`
 
 	// Supported delivery methods (e.g., streaming, progressive). If none specified,
 	// assume all are supported.
-	Delivery []ContentDelivery `json:"delivery" bson:"delivery"`
+	Delivery []ContentDelivery `json:"delivery,omitempty" bson:"delivery"`
 
 	// Array of Banner objects if companion ads are available.
-	CompanionAds []Banner `json:"companionad" bson:"companionad"`
+	CompanionAds []Banner `json:"companionad,omitempty" bson:"companionad"`
 
 	// List of supported API frameworks for this impression.
 	//
 	// If an API is not explicitly listed, it is assumed not to be supported.
-	APIs []APIFramework `json:"api" bson:"api"`
+	APIs []APIFramework `json:"api,omitempty" bson:"api"`
 
 	// Supported DAAST companion ad types.
 	//
 	// Recommended if companion Banner objects are included via the companionad array.
-	CompanionTypes []CompanionType `json:"companiontype" bson:"companiontype"`
+	CompanionTypes []CompanionType `json:"companiontype,omitempty" bson:"companiontype"`
 
 	// The maximum number of ads that can be played in an ad pod.
-	MaxSequence int `json:"maxseq" bson:"maxseq"`
+	MaxSequence int `json:"maxseq,omitempty" bson:"maxseq"`
 
 	// Type of audio feed.
-	Feed int `json:"feed" bson:"feed"`
+	Feed int `json:"feed,omitempty" bson:"feed"`
 
 	// Indicates if the ad is stitched with audio content or delivered independently, where:
 	//    0 = no;
 	//    1 = yes.
-	Stitched int `json:"stitched" bson:"stitched"`
+	Stitched int `json:"stitched,omitempty" bson:"stitched"`
 
 	// Volume normalization mode.
-	VolumeNorm int `json:"nvol" bson:"nvol"`
+	VolumeNorm int `json:"nvol,omitempty" bson:"nvol"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
 	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`

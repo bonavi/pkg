@@ -6,16 +6,16 @@ import "encoding/json"
 type ThirdParty struct {
 	// Content producer or originator ID. Useful if content is syndicated and may be
 	// posted on a site using embed tags.
-	ID string `json:"id" bson:"id"`
+	ID string `json:"id,omitempty" bson:"id"`
 
 	// Content producer or originator name (e.g., “Warner Bros”)
-	Name string `json:"name" bson:"name"`
+	Name string `json:"name,omitempty" bson:"name"`
 
 	// Array of IAB content categories that describe the content producer.
-	Categories []ContentCategory `json:"cat" bson:"cat"`
+	Categories []ContentCategory `json:"cat,omitempty" bson:"cat"`
 
 	// Highest level domain of the content producer (e.g., “producer.com”).
-	Domain string `json:"domain" bson:"domain"`
+	Domain string `json:"domain,omitempty" bson:"domain"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
 	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`

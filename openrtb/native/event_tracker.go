@@ -34,7 +34,7 @@ type EventTrackerResponse struct {
 	// The URL of the image or js.
 	//
 	// Required: for image or js, optional for custom.
-	URL string `json:"url"`
+	URL string `json:"url,omitempty"`
 
 	// To be agreed individually with the exchange, an array of
 	// key:value objects for custom tracking, for example
@@ -42,7 +42,7 @@ type EventTrackerResponse struct {
 	//
 	// Type is a key-value object (not specified if value is
 	// string-only).
-	CustomData json.RawMessage `json:"customdata"`
+	CustomData json.RawMessage `json:"customdata,omitempty"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
 	Ext json.RawMessage `json:"ext,omitempty"`

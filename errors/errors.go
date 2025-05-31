@@ -4,117 +4,100 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"maps"
 
+	"pkg/log/model"
 	"pkg/stackTrace"
 )
 
+const (
+	SkipThisCall = iota + 2
+	SkipPreviousCaller
+	Skip2PreviousCallers
+)
+
+// Error реализует протокол ошибок для использования нашей структуры в качестве error параметра
+func (e Error) Error() string {
+	return e.Err.Error()
+}
+
+// LogOption - Перечисление, необходимое для конкретизации уровня логгирования ошибки
+type LogOption int
+
+const (
+	LogAsError LogOption = iota
+	LogAsWarning
+	LogAsDebug
+	LogAsInfo
+	LogNone
+)
+
+// TypeToLogOption - Дефолтные настройки для логгирования каждого типа ошибок
+var TypeToLogOption = map[ErrorType]LogOption{
+	BadRequest:       LogAsWarning,
+	NotFound:         LogAsWarning,
+	Teapot:           LogAsWarning,
+	InternalServer:   LogAsError,
+	Forbidden:        LogAsWarning,
+	Unauthorized:     LogAsWarning,
+	ClientReject:     LogAsWarning,
+	BadGateway:       LogAsWarning,
+	ContextCancelled: LogAsWarning,
+}
+
 // New создает новую ошибку
-func (et ErrorType) New(ctx context.Context, msg string, opts ...Option) error {
+func (typ ErrorType) New(msg string) Error {
 
-	// Получаем опции в готовой структуре
-	options := mergeOptions(opts...)
-
-	// Получаем глубину пути согласно переданным опциям
-	skip := stackTrace.ThisCall
-	if options.stackTrace != nil {
-		skip = *options.stackTrace
-	}
+	var systemInfo model.SystemInfo
 
 	// Создаем новую ошибку
-	customErr := Error{
-		SystemInfo:    settings.SystemInfo,
-		ErrorType:     et,
-		Ctx:           ctx,
-		DeveloperText: "",
-		HumanText:     options.HumanText,
-		Err:           errors.New(msg),
-		StackTrace:    stackTrace.GetStackTrace(skip + 1),
-		Params:        options.params,
-		UserInfo:      ctx.Value(settings.UserInfoContextKey),
-		LogAs:         et.logOptionByDefault(),
+	return Error{
+		ErrorType:     typ,                                    // Меняется при повторном оборачивании через Wrap
+		DeveloperText: "",                                     // Служебное поле, используется для сериализации в JSON
+		HumanText:     "",                                     // Проставляется в хэндлере на дефолтное значение или на значение из опциональной функции WithCustomHumanText
+		Err:           errors.New(msg),                        // Исходная ошибка, можно добавить дополнительную ошибку через WithAdditionalError для проведения логики через Is
+		StackTrace:    stackTrace.GetStackTrace(SkipThisCall), // По дефолту получаем стектрейс от места создания этой ошибки, если необходимо урезать часть системных вызовов, можно использовать WithStackTraceJump
+		Params:        make(map[string]string),                // Дополнительные параметры, проставляются через WithParams или забираются из контекста через WithContextParams
+		SystemInfo:    systemInfo,                             // Проставляется в обработчике ошибок эндпоинта
+		LogAs:         TypeToLogOption[typ],                   // Способ логгирования ошибки, по дефолту зависит от типа ошибки, но можно конфигурировать через WithLogOption
 	}
-
-	// Если передан тип логирования, то добавляем его
-	if options.logAs != nil {
-		customErr.LogAs = *options.logAs
-	}
-
-	return customErr
 }
 
 // Wrap оборачивает ошибку
-func (et ErrorType) Wrap(ctx context.Context, err error, opts ...Option) error {
-
-	// Получаем опции в готовой структуре
-	options := mergeOptions(opts...)
-
-	// Определяем глубину пути по умолчанию
-	skip := stackTrace.ThisCall
+func (typ ErrorType) Wrap(err error) Error {
 
 	var customErr Error
+	var systemInfo model.SystemInfo
 
-	// Если это уже обернутая ошибка
-	if As(err, &customErr) {
+	if As(err, &customErr) { // Если это уже обернутая ошибка
 
-		// Если передан текст для пользователя, то затираем его
-		if options.HumanText != "" {
-			customErr.HumanText = options.HumanText
-		}
-
-		// Если передана глубина пути, то используем ее
-		if options.stackTrace != nil {
-			skip = *options.stackTrace
-		}
-		customErr.StackTrace = stackTrace.GetStackTrace(skip + 1)
-
-		// Если передан текст ошибки, то добавляем его к исходной ошибке
-		if options.errorf != nil {
-			customErr.Err = fmt.Errorf("%w: %w", *options.errorf, customErr.Err)
-		}
-
-		// Если передан параметр, что тип ошибки затирать не надо, то не затираем
-		if options.dontEraseErrorType == nil {
-			customErr.ErrorType = et
-		}
+		// Возвращаем ее
+		return customErr
 
 	} else { // Если это не обернутая ошибка
 
-		// Если передана глубина пути, то используем ее
-		if options.stackTrace != nil {
-			skip = *options.stackTrace
-		}
-
 		// Если это не обернутая ошибка, то создаем новую
-		customErr = Error{
-			SystemInfo:    settings.SystemInfo,
-			ErrorType:     et,
-			Ctx:           ctx,
-			DeveloperText: "",
-			HumanText:     options.HumanText,
-			Err:           err,
-			StackTrace:    stackTrace.GetStackTrace(skip + 1),
-			Params:        options.params,
-			UserInfo:      ctx.Value(settings.UserInfoContextKey),
-			LogAs:         et.logOptionByDefault(),
+		return Error{
+			ErrorType:     typ,                                    // Меняется при повторном оборачивании через Wrap
+			DeveloperText: "",                                     // Служебное поле, используется для сериализации в JSON
+			HumanText:     "",                                     // Проставляется в хэндлере на дефолтное значение или на значение из опциональной функции WithCustomHumanText
+			Err:           err,                                    // Исходная ошибка, можно добавить дополнительную ошибку через WithAdditionalError для проведения логики через Is
+			StackTrace:    stackTrace.GetStackTrace(SkipThisCall), // По дефолту получаем стектрейс от места создания этой ошибки, если необходимо урезать часть системных вызовов, можно использовать WithStackTraceJump
+			Params:        make(map[string]string),                // Дополнительные параметры, проставляются через WithParams или забираются из контекста через WithContextParams
+			SystemInfo:    systemInfo,                             // Проставляется в обработчике ошибок эндпоинта
+			LogAs:         TypeToLogOption[typ],                   // Способ логгирования ошибки, по дефолту зависит от типа ошибки, но можно конфигурировать через WithLogOption
 		}
 
-		if options.errorf != nil {
-			customErr.Err = fmt.Errorf("%w: %w", *options.errorf, err)
-		}
 	}
+}
 
-	// Добавляем параметры
-	if customErr.Params == nil {
-		customErr.Params = make(map[string]string)
-		maps.Copy(customErr.Params, options.params)
+// CastError приводит приедшую ошибку к нашей кастомной ошибке, если пришедшая ошибка не кастомная
+// То оборачиает ее и добавляет данные о том, что ошибка не обернута
+func CastError(err error) Error {
+	var customErr Error
+	if !As(err, &customErr) {
+		err = InternalServer.Wrap(err).WithStackTraceJump(SkipThisCall).WithParams("error", "Ошибка не обернута, путь неверный")
+		_ = As(err, &customErr)
 	}
-
-	if options.logAs != nil {
-		customErr.LogAs = *options.logAs
-	}
-
 	return customErr
 }
 
@@ -126,7 +109,7 @@ func JSON(err Error) ([]byte, error) {
 	err.DeveloperText = err.Err.Error()
 	byt, e := json.Marshal(err)
 	if e != nil {
-		return nil, InternalServer.Wrap(err.Ctx, e)
+		return nil, InternalServer.Wrap(e)
 	}
 
 	return byt, nil
@@ -169,10 +152,18 @@ func Is(err error, target error) bool {
 	}
 }
 
+func IsInternal(err error) bool {
+	var customErr Error
+	if As(err, &customErr) {
+		return customErr.ErrorType == InternalServer
+	}
+	return true
+}
+
 func IsContextError(err error) bool {
 	return Is(err, context.Canceled) || Is(err, context.DeadlineExceeded)
 }
 
-func New(err string) error {
-	return errors.New(err)
+func New(text string) error {
+	return errors.New(text)
 }

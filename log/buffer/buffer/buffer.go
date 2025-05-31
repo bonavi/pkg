@@ -83,7 +83,7 @@ func (b *Buffer) Write(p []byte) (n int, err error) {
 // ReadByte возвращает байт из буфера под номером n.
 //
 // Паникует, если n меньше нуля или больше текущего размера буфера.
-func (b *Buffer) ReadByte(n int) byte {
+func (b *Buffer) ReadByte(n int) byte { //nolint:govet
 	if n < 0 || n > len(*b) {
 		panic("buffer: index out of range")
 	}
@@ -91,7 +91,7 @@ func (b *Buffer) ReadByte(n int) byte {
 }
 
 // WriteByte записывает входной байт в буфер.
-func (b *Buffer) WriteByte(c byte) {
+func (b *Buffer) WriteByte(c byte) { //nolint:govet
 	*b = append(*b, c)
 }
 
@@ -225,17 +225,17 @@ func (b *Buffer) WriteDuration(d time.Duration) {
 func fmtFrac(buf []byte, v uint64, prec int) (nw int, nv uint64) {
 	// Опустите конечные нули вплоть до десятичной точки включительно.
 	w := len(buf)
-	isPrint := false
+	prnt := false
 	for i := 0; i < prec; i++ {
 		digit := v % 10
-		isPrint = isPrint || digit != 0
-		if isPrint {
+		prnt = prnt || digit != 0
+		if prnt {
 			w--
 			buf[w] = byte(digit) + '0'
 		}
 		v /= 10
 	}
-	if isPrint {
+	if prnt {
 		w--
 		buf[w] = '.'
 	}
@@ -272,7 +272,7 @@ func (b *Buffer) WriteTime(t time.Time, layout string) {
 
 func (b *Buffer) writeDateTimeFormat(t time.Time) {
 	year, month, day := t.Date()
-	hour, minute, second := t.Clock()
+	hour, minute, sec := t.Clock()
 	b.WriteUint64(uint64(year), 4)
 	*b = append(*b, '-')
 	b.WriteUint64(uint64(month), 2)
@@ -283,5 +283,5 @@ func (b *Buffer) writeDateTimeFormat(t time.Time) {
 	*b = append(*b, ':')
 	b.WriteUint64(uint64(minute), 2)
 	*b = append(*b, ':')
-	b.WriteUint64(uint64(second), 2)
+	b.WriteUint64(uint64(sec), 2)
 }

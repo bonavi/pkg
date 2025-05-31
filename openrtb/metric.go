@@ -19,7 +19,7 @@ type Metric struct {
 	// to bidders a priori.
 	//
 	// If the exchange itself is the source versus a third party, “EXCHANGE” is recommended.
-	Vendor string `json:"vendor" bson:"vendor"`
+	Vendor string `json:"vendor,omitempty" bson:"vendor"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
 	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`

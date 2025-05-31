@@ -24,8 +24,8 @@ const (
 
 type (
 	SettingsMongoConfig struct {
-		ConnectionURI string `env:"MONGO_CONNECTION_URI,required"`
-		Database      string `env:"MONGO_DATABASE,required"`
+		ConnectionURI string `env:"MONGO_CONNECTION_URI"`
+		Database      string `env:"MONGO_DATABASE"`
 	}
 
 	// Структура для метрик

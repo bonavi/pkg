@@ -16,7 +16,7 @@ type DataRequest struct {
 	Type DataType `json:"type"`
 
 	// Maximum length of the text in the element’s response.
-	Length int `json:"len"`
+	Length int `json:"len,omitempty"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
 	Ext json.RawMessage `json:"ext,omitempty"`
@@ -33,20 +33,20 @@ type DataResponse struct {
 	// format.
 	//
 	// Required.
-	Type DataType `json:"type"`
+	Type DataType `json:"type,omitempty"`
 
 	// Maximum length of the text in the element’s response.
 	//
 	// Required: for assetsurl/dcourl responses.
 	//
 	// Not required: for embedded asset responses.
-	Length int `json:"len"`
+	Length int `json:"len,omitempty"`
 
 	// The optional formatted string name of the data type to be
 	// displayed.
 	//
 	// Deprecated: since version 1.2.
-	Label string `json:"label"`
+	Label string `json:"label,omitempty"`
 
 	// The formatted string of data to be displayed.
 	//

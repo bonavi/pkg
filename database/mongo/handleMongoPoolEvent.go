@@ -1,8 +1,6 @@
 package mongo
 
 import (
-	"context"
-
 	"go.mongodb.org/mongo-driver/event"
 
 	"pkg/log"
@@ -10,7 +8,7 @@ import (
 
 func HandlePoolEvent(evt *event.PoolEvent) {
 	if globalMetric.mongoPoolEventsMetric == nil {
-		log.Error(context.Background(), "mongoPoolEventsMetric prometheus metric not initialized")
+		log.Error("mongoPoolEventsMetric prometheus metric not initialized")
 		return
 	}
 

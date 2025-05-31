@@ -7,9 +7,9 @@ import (
 )
 
 type RedisConfigEnv struct {
-	Host     string `env:"REDIS_HOST,required"`
-	User     string `env:"REDIS_USER,required"`
-	Password string `env:"REDIS_PASSWORD,required"`
+	Host     string `env:"REDIS_HOST"`
+	User     string `env:"REDIS_USER"`
+	Password string `env:"REDIS_PASSWORD"`
 }
 
 func NewClientRedis(cfg RedisConfigEnv, database int) (*redis.Client, error) {

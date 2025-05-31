@@ -8,7 +8,7 @@ type Regulations struct {
 	// the USA FTC, where:
 	//   0 = no;
 	//   1 = yes.
-	COPPA int `json:"coppa" bson:"coppa"`
+	COPPA int `json:"coppa,omitempty" bson:"coppa"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
 	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`

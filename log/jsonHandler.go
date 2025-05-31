@@ -1,16 +1,16 @@
 package log
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
+	"sync/atomic"
 
-	"go.opentelemetry.io/otel/trace"
+	"github.com/mailru/easyjson"
 
 	"pkg/errors"
 	"pkg/log/buffer/buffer"
+	"pkg/log/model"
 	"pkg/maps"
 	"pkg/stackTrace"
 )
@@ -22,96 +22,74 @@ type jsonLog struct {
 	Message    string            `json:"message"`
 	StackTrace []string          `json:"stackTrace"`
 	Params     map[string]string `json:"params,omitempty"`
-	SystemInfo any               `json:"systemInfo"`
-	UserInfo   any               `json:"userInfo"`
-	TraceID    string            `json:"traceID"`
+	SystemInfo model.SystemInfo  `json:"systemInfo"`
 }
 
 var _ Handler = new(JSONHandler)
 
+func (h *JSONHandler) SetLogLevel(level LogLevel) {
+	h.logLevel.Store(level)
+}
+
+func (h *JSONHandler) GetLogLevel() LogLevel {
+	logLevel, ok := h.logLevel.Load().(LogLevel)
+	if !ok {
+		return ""
+	}
+	return logLevel
+}
+
 // JSONHandler - это версия обработчика журналов для печати json в w.
 type JSONHandler struct {
-	logLevel LogLevel
+	logLevel atomic.Value
 	w        io.Writer
 }
 
 // NewJSONHandler возвращает новый экземпляр JSONHandler.
 func NewJSONHandler(w io.Writer, level LogLevel) *JSONHandler {
-	return &JSONHandler{
+	h := &JSONHandler{
 		w:        w,
-		logLevel: level,
+		logLevel: atomic.Value{},
 	}
+	h.logLevel.Store(level)
+	return h
 }
 
 // handle реализует интерфейс Handler.
-func (h *JSONHandler) handle(ctx context.Context, level LogLevel, log any, opts ...Option) {
-	if h.logLevel > level {
+func (h *JSONHandler) handle(level LogLevel, log any, opts ...Option) {
+
+	if h.GetLogLevel().GreaterThan(level) {
 		return
 	}
-
-	// Получаем идентификатор трейса
-	spanData := trace.SpanFromContext(ctx).SpanContext()
-	traceID := spanData.TraceID().String()
-
-	// Получаем информацию о юзере, которая хранится в контексте
-	userInfo := ctx.Value(logger.userInfoContextKey)
 
 	state := newJSONState(buffer.New())
 	defer state.buf.Free()
 
 	var logStruct jsonLog
 
-	// Получаем опции лога
-	logOpts := mergeOptions(opts...)
+	optsStruct := mergeOptions(opts...)
 
-	// Собираем лог в зависимости от его типа
 	switch v := log.(type) {
-
-	case string: // Если передан обычный текст
-		logStruct = jsonLog{
-			Level:      level.String(),
-			Message:    v,
-			StackTrace: stackTrace.GetStackTrace(stackTrace.SkipPreviousCaller),
-			Params:     logOpts.params,
-			UserInfo:   userInfo,
-			SystemInfo: logger.systemInfo,
-			TraceID:    traceID,
-		}
-
-	case error: // Если передана ошибка
-
-		//// Кастуем ее
-		customErr := errors.CastError(ctx, v)
-
-		// Собираем лог с дополнением данных из ошибки
+	case error:
+		customErr := errors.CastError(v)
 		logStruct = jsonLog{
 			Level:      level.String(),
 			Message:    customErr.Error(),
 			StackTrace: customErr.StackTrace,
-			Params:     maps.Join(logOpts.params, customErr.Params),
-			UserInfo:   userInfo,
+			Params:     maps.Join(optsStruct.params, customErr.Params),
 			SystemInfo: logger.systemInfo,
-			TraceID:    traceID,
 		}
-
-	default: // Если передан неизвестный тип данных
-
-		// Добавляем информацию о том, что такой тип не обслуживается
-		logOpts.params["systemError"] = fmt.Sprintf("Processor jsonLog for type %T not implemented", log)
-
-		// Собираем лог ошибки, пытаясь все-таки показать исходный лог
+	default:
 		logStruct = jsonLog{
-			Level:      LevelError.String(),
-			Message:    fmt.Sprintf("%v", log),
-			StackTrace: stackTrace.GetStackTrace(stackTrace.SkipPreviousCaller),
-			Params:     logOpts.params,
-			UserInfo:   userInfo,
+			Level:      level.String(),
+			Message:    fmt.Sprintf("%v", v),
+			StackTrace: stackTrace.GetStackTrace(errors.SkipPreviousCaller),
+			Params:     optsStruct.params,
 			SystemInfo: logger.systemInfo,
-			TraceID:    traceID,
 		}
 	}
 
-	json, err := json.Marshal(logStruct)
+	json, err := easyjson.Marshal(logStruct)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "logging: could not generate json jsonLog: %s\n", err)
 		return

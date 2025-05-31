@@ -9,19 +9,19 @@ type Source struct {
 	//    1 = upstream source.
 	//
 	// Recommended.
-	FinalSaleDecision int `json:"fd" bson:"fd"`
+	FinalSaleDecision int `json:"fd,omitempty" bson:"fd"`
 
 	// Transaction ID that must be common across all participants in this bid request
 	// (e.g., potentially multiple exchanges).
 	//
 	// Recommended.
-	TransactionID string `json:"tid" bson:"tid"`
+	TransactionID string `json:"tid,omitempty" bson:"tid"`
 
 	// Payment ID chain string containing embedded syntax described in the TAG Payment
 	// ID Protocol v1.0.
 	//
 	// Recommended.
-	PaymentChain string `json:"pchain" bson:"pchain"`
+	PaymentChain string `json:"pchain,omitempty" bson:"pchain"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
 	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`

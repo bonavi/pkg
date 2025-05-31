@@ -1,98 +1,115 @@
 package log
 
 import (
-	"context"
 	"os"
 	"time"
 
 	"pkg/errors"
+	"pkg/log/model"
 )
 
-// settings - конфигурация логгера
-type settings struct {
+// loggerSettings - конфигурация логгера
+type loggerSettings struct {
 
 	// Массив обработчиков лога
 	handlers []Handler
 
 	// Дополнительные параметры, которые добавляются в каждый тег и настраиваются при инициализации
-	systemInfo any
-
-	userInfoContextKey any
+	systemInfo model.SystemInfo
 }
 
 // logger - синглтон переменная логгера
-var logger = &settings{
-	handlers:   []Handler{},
-	systemInfo: nil,
+var logger = &loggerSettings{
+	systemInfo: model.SystemInfo{
+		BuildDate:   "",
+		Hostname:    "",
+		Version:     "",
+		ServiceName: "",
+		Build:       "",
+		Env:         "",
+	},
+	handlers: []Handler{NewTextHandler(os.Stdout, LevelDebug)},
 }
 
 // Init конфигурирует логгер
 func Init(
-	systemInfo any,
-	userInfoContextKey any,
+	systemInfo model.SystemInfo,
 	handlers ...Handler,
-) {
-	logger = &settings{
-		systemInfo:         systemInfo,
-		userInfoContextKey: userInfoContextKey,
-		handlers:           handlers,
+) error {
+	logger = &loggerSettings{
+		systemInfo: systemInfo,
+		handlers:   handlers,
+	}
+	return nil
+}
+
+func ChangeLogLevel(level LogLevel) {
+	for _, handler := range logger.handlers {
+		handler.SetLogLevel(level)
 	}
 }
 
-func Off() {
-	logger = new(settings)
+func GetLogLevel() LogLevel {
+	if len(logger.handlers) == 0 {
+		return ""
+	}
+	return logger.handlers[0].GetLogLevel()
+}
+
+func GetSystemInfo() model.SystemInfo {
+	return logger.systemInfo
 }
 
 // Error логгирует сообщения для ошибок системы
-func Error(ctx context.Context, log any, opts ...Option) {
+func Error(log any, opts ...Option) {
 	for _, handler := range logger.handlers {
-		handler.handle(ctx, LevelError, log, opts...)
+		handler.handle(LevelError, log, opts...)
 	}
 }
 
 // Warning логгирует сообщения для ошибок пользователя
-func Warning(ctx context.Context, log any, opts ...Option) {
+func Warning(log any, opts ...Option) {
 	for _, handler := range logger.handlers {
-		handler.handle(ctx, LevelWarning, log, opts...)
+		handler.handle(LevelWarning, log, opts...)
 	}
 }
 
 // Info логгирует сообщения для информации
-func Info(ctx context.Context, log any, opts ...Option) {
+func Info(log any, opts ...Option) {
 	for _, handler := range logger.handlers {
-		handler.handle(ctx, LevelInfo, log, opts...)
+		handler.handle(LevelInfo, log, opts...)
 	}
 }
 
 // Fatal логгирует сообщения для фатальных ошибок и завершает работу программы
-func Fatal(ctx context.Context, log any, opts ...Option) {
+func Fatal(log any, opts ...Option) {
 	for _, handler := range logger.handlers {
-		handler.handle(ctx, LevelFatal, log, opts...)
+		handler.handle(LevelFatal, log, opts...)
 	}
 	time.Sleep(1 * time.Second)
 	os.Exit(1)
 }
 
 // Debug логгирует сообщения для дебага
-func Debug(ctx context.Context, log any, opts ...Option) {
+func Debug(log any, opts ...Option) {
 	for _, handler := range logger.handlers {
-		handler.handle(ctx, LevelDebug, log, opts...)
+		handler.handle(LevelDebug, log, opts...)
 	}
 }
 
-func LogError(ctx context.Context, err error) {
+func LogError(err error, opts ...Option) {
 
-	customErr := errors.CastError(ctx, err)
+	customErr := errors.CastError(err)
 
 	switch customErr.LogAs {
 	case errors.LogAsError:
-		Error(ctx, err)
+		Error(err, opts...)
 	case errors.LogAsWarning:
-		Warning(ctx, err)
+		Warning(err, opts...)
 	case errors.LogAsDebug:
-		Debug(ctx, err)
+		Debug(err, opts...)
 	case errors.LogAsInfo:
-		Info(ctx, err)
+		Info(err, opts...)
 	case errors.LogNone:
 		break
 	}

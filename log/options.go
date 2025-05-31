@@ -1,17 +1,10 @@
 package log
 
-import (
-	"pkg/pointer"
-	"pkg/stackTrace"
-)
-
 type Option func(*options)
 
 type options struct {
 	// Дополнительные параметры
 	params map[string]string
-	// Насколько надо скипнуть текущий вызов в стеке вызовов
-	stackTraceSkip *int
 }
 
 func ParamsOption(keyVal ...string) Option {
@@ -25,26 +18,9 @@ func ParamsOption(keyVal ...string) Option {
 	return func(o *options) { o.params = p }
 }
 
-func SkipThisCallOption() Option {
-	return func(o *options) { o.stackTraceSkip = pointer.Pointer(stackTrace.SkipThisCall) }
-}
-
-func SkipPreviousCallerOption() Option {
-	return func(o *options) { o.stackTraceSkip = pointer.Pointer(stackTrace.SkipPreviousCaller) }
-}
-
-func Skip2PreviousCallersOption() Option {
-	return func(o *options) { o.stackTraceSkip = pointer.Pointer(stackTrace.Skip2PreviousCallers) }
-}
-
-func Skip3PreviousCallersOption() Option {
-	return func(o *options) { o.stackTraceSkip = pointer.Pointer(stackTrace.Skip3PreviousCallers) }
-}
-
 func mergeOptions(opts ...Option) options {
 	options := &options{
-		stackTraceSkip: nil,
-		params:         make(map[string]string),
+		params: nil,
 	}
 
 	for _, opt := range opts {

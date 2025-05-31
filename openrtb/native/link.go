@@ -9,13 +9,13 @@ type Link struct {
 
 	// List of third-party tracker URLs to be fired on click of
 	// the URL.
-	ClickTrackers []string `json:"clicktrackers"`
+	ClickTrackers []string `json:"clicktrackers,omitempty"`
 
 	// Fallback URL for deeplink.
 	//
 	// To be used if the URL given in url is not supported by
 	// the device.
-	Fallback string `json:"fallback"`
+	Fallback string `json:"fallback,omitempty"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
 	Ext json.RawMessage `json:"ext,omitempty"`
