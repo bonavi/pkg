@@ -1,8 +1,6 @@
 package router
 
 import (
-	"net/http/pprof"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
@@ -26,13 +24,6 @@ func NewRouter() *chi.Mux {
 
 	// healthCheck
 	r.Get("/health", HealthCheck)
-
-	// pprof
-	r.HandleFunc("/debug/pprof/*", pprof.Index)
-	r.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-	r.HandleFunc("/debug/pprof/profile", pprof.Profile)
-	r.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
-	r.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
 	return r
 }
