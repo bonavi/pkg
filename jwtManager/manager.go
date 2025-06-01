@@ -1,7 +1,7 @@
 package jwtManager
 
 import (
-	"context"
+	"fmt"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -38,17 +38,18 @@ func Init(
 
 type MyCustomClaims[T any] struct {
 	CustomClaims T
+	TokenType    TokenType
 	jwt.StandardClaims
 }
 
-type TokenType int
+type TokenType string
 
 const (
-	RefreshToken = iota + 1
-	AccessToken
+	RefreshToken TokenType = "refresh"
+	AccessToken  TokenType = "access"
 )
 
-func GenerateToken[T any](ctx context.Context, tokenType TokenType, customClaims T) (string, error) {
+func GenerateToken[T any](tokenType TokenType, customClaims T) (string, error) {
 
 	if jwtManager == nil {
 		return "", errors.InternalServer.New("JWTManager is not initialized")
@@ -77,7 +78,7 @@ func GenerateToken[T any](ctx context.Context, tokenType TokenType, customClaims
 	return tokenStr, nil
 }
 
-func ParseToken[T any](ctx context.Context, reqToken string) (T, error) {
+func ParseToken[T any](reqToken string, tokenType TokenType) (T, error) {
 
 	var typeZeroValue T
 
@@ -133,6 +134,11 @@ func ParseToken[T any](ctx context.Context, reqToken string) (T, error) {
 	claims, ok := token.Claims.(*MyCustomClaims[T])
 	if !ok {
 		return typeZeroValue, errors.InternalServer.New("Error get user claims from token")
+	}
+
+	if claims.TokenType != tokenType {
+		return claims.CustomClaims, errors.Forbidden.New(fmt.Sprintf("passed token is not %s token", tokenType)).
+			WithStackTraceJump(errors.SkipThisCall)
 	}
 
 	// Обрабатываем ошибку парсера jwt

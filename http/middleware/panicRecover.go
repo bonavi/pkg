@@ -12,7 +12,7 @@ func PanicRecover(next http.Handler) http.Handler {
 
 		ctx := r.Context()
 
-		defer panicRecover.PanicRecover(ctx, func(err error) {
+		defer panicRecover.PanicRecover(func(err error) {
 			chain.DefaultErrorEncoder(ctx, w, err)
 		})
 

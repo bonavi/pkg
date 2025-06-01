@@ -2,7 +2,12 @@ package sqlite
 
 import (
 	"context"
+	"os"
+	"path/filepath"
+	"pkg/errors"
 	"pkg/sql"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type SQLiteConfigEnv struct {
@@ -10,6 +15,19 @@ type SQLiteConfigEnv struct {
 }
 
 func NewClientSQLite(ctx context.Context, config SQLiteConfigEnv) (*sql.DB, error) {
+
+	// Извлекаем директорию из полного пути
+	dir := filepath.Dir(config.Path)
+
+	// Проверяем, существует ли директория для файла базы данных
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+
+		// Создаем все промежуточные директории
+		if err = os.MkdirAll(dir, os.ModePerm); err != nil {
+			return nil, errors.InternalServer.Wrap(err)
+		}
+	}
+
 	db, err := sql.Open("sqlite3", config.Path)
 	if err != nil {
 		return nil, err

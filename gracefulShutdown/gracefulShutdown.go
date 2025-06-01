@@ -2,7 +2,6 @@ package gracefulShutdown
 
 import (
 	"context"
-	"net/http"
 	"pkg/http/server"
 	"time"
 
@@ -65,7 +64,7 @@ func AddGracefulShutdownErrGroup(
 
 		// Плавно завершаем работу серверов
 		for _, httpServer := range httpServers {
-			_ = httpServer.Shutdown(ctx)
+			httpServer.Shutdown(ctx)
 		}
 		for _, grpcServer := range grpcServers {
 			grpcServer.GracefulStop()

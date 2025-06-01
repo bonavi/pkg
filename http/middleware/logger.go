@@ -19,7 +19,7 @@ func Logger(next http.Handler) http.Handler {
 			requestID = *_requestID
 		}
 
-		log.Info(ctx, fmt.Sprintf("%s [%s] %s", r.URL.Path, strings.ToLower(r.Method), requestID))
+		log.Info(fmt.Sprintf("%s [%s] %s", r.URL.Path, strings.ToLower(r.Method), requestID))
 
 		next.ServeHTTP(w, r)
 	})
