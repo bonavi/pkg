@@ -94,7 +94,7 @@ func CheckStruct(t *testing.T, want, get any, typ ...any) {
 	if len(typ) == 0 {
 		diff = cmp.Diff(get, want)
 	} else {
-		var cmpStructField = cmp.Comparer(func(x, y *timestamppb.Timestamp) bool {
+		var cmpStructField = cmp.Comparer(func(x, y *timestampproto.Timestamp) bool {
 			return x.String() == y.String()
 		})
 		diff = cmp.Diff(get, want, cmpopts.IgnoreUnexported(typ...), cmpStructField)

@@ -9,8 +9,15 @@ import (
 	"pkg/sql"
 )
 
-func NewClientPgsql(ctx context.Context, connectionURI string) (*sql.DB, error) {
-	db, err := sql.Open("pgx", connectionURI)
+type PgsqlConfigEnv struct {
+	Host     string `env:"PGSQL_HOST"`
+	Database string `env:"PGSQL_DATABASE"`
+	User     string `env:"PGSQL_USER"`
+	Password string `env:"PGSQL_PASSWORD"`
+}
+
+func NewClientPgsql(ctx context.Context, conf PgsqlConfigEnv) (*sql.DB, error) {
+	db, err := sql.Open("pgx", conf.GetConnectionURI())
 	if err != nil {
 		return nil, err
 	}
@@ -32,6 +39,6 @@ func NewClientPgsql(ctx context.Context, connectionURI string) (*sql.DB, error) 
 	return db.Unsafe(), nil
 }
 
-func GetConnectionURI(host, user, password, database string) string {
-	return fmt.Sprintf("postgres://%v:%v@%v/%v", user, password, host, database)
+func (p PgsqlConfigEnv) GetConnectionURI() string {
+	return fmt.Sprintf("postgres://%v:%v@%v/%v", p.User, p.Password, p.Host, p.Database)
 }

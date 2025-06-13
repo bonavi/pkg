@@ -57,6 +57,7 @@ func GenerateToken[T any](tokenType TokenType, customClaims T) (string, error) {
 
 	claims := MyCustomClaims[T]{
 		CustomClaims: customClaims,
+		TokenType:    tokenType,
 		StandardClaims: jwt.StandardClaims{
 			Audience:  "",
 			ExpiresAt: time.Now().Add(jwtManager.ttls[tokenType]).Unix(),
