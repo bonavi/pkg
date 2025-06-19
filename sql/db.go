@@ -74,7 +74,7 @@ func (s *DB) Select(ctx context.Context, dest any, q sq.Sqlizer) (err error) {
 	}
 
 	// Извлекаем транзакцию из контекста
-	if tx := extractTx(ctx); tx != nil {
+	if tx := ExtractTx(ctx); tx != nil {
 
 		// Выполняем запрос в рамках транзакции
 		err = tx.Tx.SelectContext(ctx, dest, query, args...)
@@ -101,7 +101,7 @@ func (s *DB) Get(ctx context.Context, dest any, q sq.Sqlizer) (err error) {
 	}
 
 	// Извлекаем транзакцию из контекста
-	if tx := extractTx(ctx); tx != nil {
+	if tx := ExtractTx(ctx); tx != nil {
 
 		// Выполняем запрос в рамках транзакции
 		err = tx.Tx.GetContext(ctx, dest, query, args...)
@@ -130,7 +130,7 @@ func (s *DB) Query(ctx context.Context, q sq.Sqlizer) (_ *Rows, err error) {
 	rows := &Rows{Rows: nil}
 
 	// Извлекаем транзакцию из контекста
-	if tx := extractTx(ctx); tx != nil {
+	if tx := ExtractTx(ctx); tx != nil {
 
 		// Выполняем запрос в рамках транзакции
 		rows.Rows, err = tx.Tx.QueryxContext(ctx, query, args...)
@@ -159,7 +159,7 @@ func (s *DB) QueryRow(ctx context.Context, q sq.Sqlizer) (*Row, error) {
 	row := &Row{Row: nil}
 
 	// Извлекаем транзакцию из контекста
-	if tx := extractTx(ctx); tx != nil {
+	if tx := ExtractTx(ctx); tx != nil {
 
 		// Выполняем запрос в рамках транзакции
 		row.Row = tx.Tx.QueryRowxContext(ctx, query, args...)
@@ -183,7 +183,7 @@ func (s *DB) Prepare(ctx context.Context, q sq.Sqlizer) (_ *Stmt, err error) {
 	var stmt = &Stmt{Stmt: nil}
 
 	// Извлекаем транзакцию из контекста
-	if tx := extractTx(ctx); tx != nil {
+	if tx := ExtractTx(ctx); tx != nil {
 
 		// Подготавливаем запрос в рамках транзакции
 		stmt.Stmt, err = tx.Tx.PreparexContext(ctx, query)
@@ -210,7 +210,7 @@ func (s *DB) Exec(ctx context.Context, q sq.Sqlizer) (err error) {
 	}
 
 	// Извлекаем транзакцию из контекста
-	if tx := extractTx(ctx); tx != nil {
+	if tx := ExtractTx(ctx); tx != nil {
 
 		// Исполняем запрос в рамках транзакции
 		_, err = tx.Tx.ExecContext(ctx, query, args...)
@@ -239,7 +239,7 @@ func (s *DB) ExecWithLastInsertID(ctx context.Context, q sq.Sqlizer) (id uint32,
 	query += " RETURNING id"
 
 	// Извлекаем транзакцию из контекста
-	if tx := extractTx(ctx); tx != nil {
+	if tx := ExtractTx(ctx); tx != nil {
 
 		// Исполняем запрос в рамках транзакции
 		err = tx.Tx.GetContext(ctx, &id, query, args...)
@@ -268,7 +268,7 @@ func (s *DB) ExecWithRowsAffected(ctx context.Context, q sq.Sqlizer) (_ uint32, 
 	var result sql.Result
 
 	// Извлекаем транзакцию из контекста
-	if tx := extractTx(ctx); tx != nil {
+	if tx := ExtractTx(ctx); tx != nil {
 
 		// Исполняем запрос в рамках транзакции
 		result, err = tx.Tx.ExecContext(ctx, query, args...)

@@ -10,7 +10,7 @@ func InjectTx(ctx context.Context, tx *Tx) context.Context {
 	return context.WithValue(ctx, txKey{}, tx)
 }
 
-func extractTx(ctx context.Context) *Tx {
+func ExtractTx(ctx context.Context) *Tx {
 	if tx, ok := ctx.Value(txKey{}).(*Tx); ok {
 		return tx
 	}
