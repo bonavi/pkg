@@ -24,7 +24,7 @@ func NewClientSQLite(ctx context.Context, config SQLiteConfigEnv) (*sql.DB, erro
 
 		// Создаем все промежуточные директории
 		if err = os.MkdirAll(dir, os.ModePerm); err != nil {
-			return nil, errors.InternalServer.Wrap(err)
+			return nil, errors.Default.Wrap(err)
 		}
 	}
 

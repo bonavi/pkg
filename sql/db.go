@@ -3,11 +3,11 @@ package sql
 import (
 	"context"
 	"database/sql"
+	"net/http"
+	"pkg/errors"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
-
-	"pkg/errors"
 )
 
 var _ SQL = &DB{DB: nil}
@@ -70,7 +70,7 @@ func (s *DB) Select(ctx context.Context, dest any, q sq.Sqlizer) (err error) {
 	// Формируем запрос из билдера
 	query, args, err := ConvertBuilderToSQL(q)
 	if err != nil {
-		return errors.InternalServer.Wrap(err)
+		return errors.Default.Wrap(err)
 	}
 
 	// Извлекаем транзакцию из контекста
@@ -97,7 +97,7 @@ func (s *DB) Get(ctx context.Context, dest any, q sq.Sqlizer) (err error) {
 	// Формируем запрос из билдера
 	query, args, err := ConvertBuilderToSQL(q)
 	if err != nil {
-		return errors.InternalServer.Wrap(err)
+		return errors.Default.Wrap(err)
 	}
 
 	// Извлекаем транзакцию из контекста
@@ -124,7 +124,7 @@ func (s *DB) Query(ctx context.Context, q sq.Sqlizer) (_ *Rows, err error) {
 	// Формируем запрос из билдера
 	query, args, err := ConvertBuilderToSQL(q)
 	if err != nil {
-		return nil, errors.InternalServer.Wrap(err)
+		return nil, errors.Default.Wrap(err)
 	}
 
 	rows := &Rows{Rows: nil}
@@ -153,7 +153,7 @@ func (s *DB) QueryRow(ctx context.Context, q sq.Sqlizer) (*Row, error) {
 	// Формируем запрос из билдера
 	query, args, err := ConvertBuilderToSQL(q)
 	if err != nil {
-		return nil, errors.InternalServer.Wrap(err)
+		return nil, errors.Default.Wrap(err)
 	}
 
 	row := &Row{Row: nil}
@@ -177,7 +177,7 @@ func (s *DB) Prepare(ctx context.Context, q sq.Sqlizer) (_ *Stmt, err error) {
 	// Формируем запрос из билдера
 	query, _, err := ConvertBuilderToSQL(q)
 	if err != nil {
-		return nil, errors.InternalServer.Wrap(err)
+		return nil, errors.Default.Wrap(err)
 	}
 
 	var stmt = &Stmt{Stmt: nil}
@@ -206,7 +206,7 @@ func (s *DB) Exec(ctx context.Context, q sq.Sqlizer) (err error) {
 	// Формируем запрос из билдера
 	query, args, err := ConvertBuilderToSQL(q)
 	if err != nil {
-		return errors.InternalServer.Wrap(err)
+		return errors.Default.Wrap(err)
 	}
 
 	// Извлекаем транзакцию из контекста
@@ -233,7 +233,7 @@ func (s *DB) ExecWithLastInsertID(ctx context.Context, q sq.Sqlizer) (id uint32,
 	// Формируем запрос из билдера
 	query, args, err := ConvertBuilderToSQL(q)
 	if err != nil {
-		return 0, errors.InternalServer.Wrap(err)
+		return 0, errors.Default.Wrap(err)
 	}
 
 	query += " RETURNING id"
@@ -262,7 +262,7 @@ func (s *DB) ExecWithRowsAffected(ctx context.Context, q sq.Sqlizer) (_ uint32, 
 	// Формируем запрос из билдера
 	query, args, err := ConvertBuilderToSQL(q)
 	if err != nil {
-		return 0, errors.InternalServer.Wrap(err)
+		return 0, errors.Default.Wrap(err)
 	}
 
 	var result sql.Result
@@ -296,11 +296,11 @@ func wrapSQLError(err error) error {
 
 	switch {
 	case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
-		return errors.ClientReject.Wrap(err).WithStackTraceJump(errors.SkipPreviousCaller)
+		return errors.Default.Wrap(err).SkipPreviousCaller()
 	case errors.Is(err, sql.ErrNoRows):
-		return errors.NotFound.Wrap(err).WithStackTraceJump(errors.SkipPreviousCaller)
+		return errors.ErrorType{HTTPCode: http.StatusNotFound}.Wrap(err).SkipPreviousCaller()
 	default:
-		return errors.InternalServer.Wrap(err).WithStackTraceJump(errors.SkipPreviousCaller)
+		return errors.Default.Wrap(err).SkipPreviousCaller()
 	}
 }
 
@@ -309,13 +309,13 @@ func ConvertBuilderToSQL(q sq.Sqlizer) (string, []any, error) {
 	// Формируем запрос из билдера
 	query, args, err := q.ToSql()
 	if err != nil {
-		return "", nil, errors.InternalServer.Wrap(err)
+		return "", nil, errors.Default.Wrap(err)
 	}
 
 	// Заменяем все ? на $1, $2 и т.д.
 	query, err = sq.Dollar.ReplacePlaceholders(query)
 	if err != nil {
-		return "", nil, errors.InternalServer.Wrap(err)
+		return "", nil, errors.Default.Wrap(err)
 	}
 
 	return query, args, nil

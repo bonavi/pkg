@@ -16,13 +16,14 @@ import (
 )
 
 // jsonLog - Структура лога
+//
 //easyjson:json
 type jsonLog struct {
-	Level      string            `json:"level"`
-	Message    string            `json:"message"`
-	StackTrace []string          `json:"stackTrace"`
-	Params     map[string]string `json:"params,omitempty"`
-	SystemInfo model.SystemInfo  `json:"systemInfo"`
+	Level      string           `json:"level"`
+	Message    string           `json:"message"`
+	StackTrace []string         `json:"stackTrace"`
+	Params     map[string]any   `json:"params,omitempty"`
+	SystemInfo model.SystemInfo `json:"systemInfo"`
 }
 
 var _ Handler = new(JSONHandler)
@@ -56,9 +57,9 @@ func NewJSONHandler(w io.Writer, level LogLevel) *JSONHandler {
 }
 
 // handle реализует интерфейс Handler.
-func (h *JSONHandler) handle(level LogLevel, log any, opts ...Option) {
+func (h *JSONHandler) handle(log Log) {
 
-	if h.GetLogLevel().GreaterThan(level) {
+	if h.GetLogLevel().GreaterThan(log.level) {
 		return
 	}
 
@@ -67,24 +68,30 @@ func (h *JSONHandler) handle(level LogLevel, log any, opts ...Option) {
 
 	var logStruct jsonLog
 
-	optsStruct := mergeOptions(opts...)
-
-	switch v := log.(type) {
+	switch v := log.content.(type) {
 	case error:
 		customErr := errors.CastError(v)
+
+		var message string
+		if customErr.Err != nil {
+			message = customErr.Error()
+		} else {
+			message = "unknown error"
+		}
+
 		logStruct = jsonLog{
-			Level:      level.String(),
-			Message:    customErr.Error(),
+			Level:      log.level.String(),
+			Message:    message,
 			StackTrace: customErr.StackTrace,
-			Params:     maps.Join(optsStruct.params, customErr.Params),
+			Params:     maps.Join(log.params, customErr.Params),
 			SystemInfo: logger.systemInfo,
 		}
 	default:
 		logStruct = jsonLog{
-			Level:      level.String(),
+			Level:      log.level.String(),
 			Message:    fmt.Sprintf("%v", v),
 			StackTrace: stackTrace.GetStackTrace(errors.SkipPreviousCaller),
-			Params:     optsStruct.params,
+			Params:     log.params,
 			SystemInfo: logger.systemInfo,
 		}
 	}

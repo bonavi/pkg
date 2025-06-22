@@ -1,10 +1,9 @@
 package validator
 
 import (
+	"pkg/errors"
 	"reflect"
 	"strings"
-
-	"pkg/errors"
 )
 
 type validatorProtocol interface {
@@ -16,13 +15,13 @@ func Validate(data any) error {
 
 	// Валидируем структуру
 	if err := ZeroValue(data); err != nil {
-		return errors.BadRequest.Wrap(err).WithStackTraceJump(errors.SkipThisCall)
+		return err
 	}
 
 	// Если структура реализует интерфейс валидатора, то валидируем ее с помощью функции
 	if v, ok := data.(validatorProtocol); ok {
 		if err := v.Validate(); err != nil {
-			return errors.BadRequest.Wrap(err).WithStackTraceJump(errors.SkipThisCall)
+			return err
 		}
 	}
 
@@ -42,9 +41,9 @@ func zeroValue(requestStruct any, tag string, depth int) (tags []string, err err
 		// Если передан указатель на структуру, разыменовываем
 		reflectValue = reflectValue.Elem()
 	default:
-		return tags, errors.InternalServer.New("Интерфейс должен быть структурой или указателем на структуру").
+		return tags, errors.Default.New("Интерфейс должен быть структурой или указателем на структуру").
 			WithParams("Тип интерфейса", reflectValue.Kind().String()).
-			WithStackTraceJump(errors.SkipThisCall)
+			SkipThisCall()
 	}
 
 	reflectType := reflectValue.Type()
@@ -112,7 +111,7 @@ func ZeroValue(requestStruct any) error {
 		for _, tag := range tags {
 			params = append(params, tag, "required")
 		}
-		return errors.BadRequest.New("Required field is not filled").
+		return errors.Default.New("Required field is not filled").
 			WithParams(params...)
 	}
 

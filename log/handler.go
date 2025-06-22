@@ -2,7 +2,7 @@ package log
 
 // Handler - это интерфейс обработчика журналов.
 type Handler interface {
-	handle(level LogLevel, log any, opts ...Option)
+	handle(log Log)
 	SetLogLevel(level LogLevel)
 	GetLogLevel() LogLevel
 }

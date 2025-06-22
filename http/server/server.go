@@ -3,9 +3,8 @@ package server
 import (
 	"context"
 	"net/http"
-	"time"
-
 	"pkg/errors"
+	"time"
 )
 
 const (
@@ -23,7 +22,7 @@ func GetDefaultServer(
 
 	// Проверяем, передали ли адрес
 	if addr == "" {
-		return nil, errors.InternalServer.New("Переменная окружения LISTEN_HTTP не задана").WithStackTraceJump(errors.SkipThisCall)
+		return nil, errors.Default.New("Переменная окружения LISTEN_HTTP не задана").SkipThisCall()
 	}
 
 	return &Server{
@@ -52,7 +51,7 @@ func (s *Server) Serve() error {
 		if errors.Is(err, http.ErrServerClosed) {
 			return nil
 		}
-		return errors.InternalServer.Wrap(err)
+		return errors.Default.Wrap(err)
 	}
 	return nil
 }

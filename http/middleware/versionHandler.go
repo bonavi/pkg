@@ -3,7 +3,6 @@ package middleware
 import (
 	"encoding/json"
 	"net/http"
-	"pkg/errors"
 	"pkg/log"
 
 	"github.com/gofiber/fiber/v2"
@@ -35,7 +34,7 @@ func NewVersionHandler(version, build, buildDate, hostname string) func(http.Res
 
 		// Пишем ответ в HTTP-ответ
 		if _, err := w.Write(message); err != nil {
-			log.Error(errors.InternalServer.Wrap(err))
+			log.Error(err)
 		}
 	}
 }

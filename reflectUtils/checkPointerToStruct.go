@@ -13,13 +13,13 @@ func CheckPointerToStruct(dest any) error {
 	if reflectVar.Kind() != reflect.Ptr {
 		return errors.InternalServer.New("Пришедший интерфейс не является указателем").
 			WithParams("Тип интерфейса", reflectVar.Kind().String()).
-			WithStackTraceJump(errors.SkipThisCall)
+			SkipThisCall()
 	}
 
 	if reflectVar.Elem().Kind() != reflect.Struct {
 		return errors.InternalServer.New("Тип указателя не является структурой").
 			WithParams("Тип указателя", reflectVar.Kind().String()).
-			WithStackTraceJump(errors.SkipThisCall)
+			SkipThisCall()
 	}
 
 	return nil

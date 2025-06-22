@@ -2,11 +2,19 @@ package log
 
 import (
 	"os"
+	"pkg/stackTrace"
 	"time"
 
 	"pkg/errors"
 	"pkg/log/model"
 )
+
+type Log struct {
+	level      LogLevel
+	content    any
+	params     map[string]any
+	stackTrace []string
+}
 
 // loggerSettings - конфигурация логгера
 type loggerSettings struct {
@@ -43,6 +51,12 @@ func Init(
 	return nil
 }
 
+func handle(log Log) {
+	for _, handler := range logger.handlers {
+		handler.handle(log)
+	}
+}
+
 func ChangeLogLevel(level LogLevel) {
 	for _, handler := range logger.handlers {
 		handler.SetLogLevel(level)
@@ -60,57 +74,75 @@ func GetSystemInfo() model.SystemInfo {
 	return logger.systemInfo
 }
 
-// Error логгирует сообщения для ошибок системы
-func Error(log any, opts ...Option) {
-	for _, handler := range logger.handlers {
-		handler.handle(LevelError, log, opts...)
+func emptyLog() Log {
+	return Log{
+		level:      LevelError,
+		content:    nil,
+		params:     make(map[string]any),
+		stackTrace: stackTrace.GetStackTrace(errors.SkipPreviousCaller),
 	}
 }
 
-// Warning логгирует сообщения для ошибок пользователя
-func Warning(log any, opts ...Option) {
-	for _, handler := range logger.handlers {
-		handler.handle(LevelWarning, log, opts...)
+func (l Log) ChangeLog(level LogLevel, content any) Log {
+
+	if len(l.stackTrace) == 0 {
+		l.stackTrace = stackTrace.GetStackTrace(errors.Skip2PreviousCallers)
 	}
+
+	l.level = level
+	l.content = content
+
+	if l.params == nil {
+		l.params = make(map[string]any)
+	}
+
+	return l
 }
 
-// Info логгирует сообщения для информации
-func Info(log any, opts ...Option) {
-	for _, handler := range logger.handlers {
-		handler.handle(LevelInfo, log, opts...)
-	}
+func (l Log) Error(content any) {
+	handle(l.ChangeLog(LevelError, content))
 }
 
-// Fatal логгирует сообщения для фатальных ошибок и завершает работу программы
-func Fatal(log any, opts ...Option) {
-	for _, handler := range logger.handlers {
-		handler.handle(LevelFatal, log, opts...)
-	}
+func (l Log) Info(content any) {
+	handle(l.ChangeLog(LevelInfo, content))
+}
+
+func (l Log) Warning(content any) {
+	handle(l.ChangeLog(LevelWarning, content))
+}
+
+func (l Log) Debug(content any) {
+	handle(l.ChangeLog(LevelDebug, content))
+}
+
+func (l Log) Fatal(content any) {
+	handle(l.ChangeLog(LevelFatal, content))
+
 	time.Sleep(1 * time.Second)
 	os.Exit(1)
 }
 
-// Debug логгирует сообщения для дебага
-func Debug(log any, opts ...Option) {
-	for _, handler := range logger.handlers {
-		handler.handle(LevelDebug, log, opts...)
-	}
-}
-
-func LogError(err error, opts ...Option) {
-
+func (l Log) LogError(err error) {
 	customErr := errors.CastError(err)
 
-	switch customErr.LogAs {
+	switch customErr.ErrorType.LogAs {
 	case errors.LogAsError:
-		Error(err, opts...)
+		l.Error(err)
 	case errors.LogAsWarning:
-		Warning(err, opts...)
+		l.Warning(err)
 	case errors.LogAsDebug:
-		Debug(err, opts...)
+		l.Debug(err)
 	case errors.LogAsInfo:
-		Info(err, opts...)
+		l.Info(err)
 	case errors.LogNone:
 		break
 	}
+	return
 }
+
+func Error(content any)   { emptyLog().Error(content) }
+func Warning(content any) { emptyLog().Warning(content) }
+func Info(content any)    { emptyLog().Info(content) }
+func Fatal(content any)   { emptyLog().Fatal(content) }
+func Debug(content any)   { emptyLog().Debug(content) }
+func LogError(err error)  { emptyLog().LogError(err) }

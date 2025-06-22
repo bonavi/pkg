@@ -2,8 +2,8 @@ package log
 
 import (
 	"os"
-
 	"pkg/errors"
+
 	"pkg/log/model"
 )
 
@@ -21,8 +21,8 @@ func InitDefaultLogger(
 	}
 
 	if err := Init(systemInfo, logHandlers...); err != nil {
-		return errors.InternalServer.Wrap(err).
-			WithStackTraceJump(errors.SkipThisCall)
+		return errors.Default.Wrap(err).
+			SkipThisCall()
 	}
 
 	return nil

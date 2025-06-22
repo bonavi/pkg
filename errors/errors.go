@@ -2,8 +2,8 @@ package errors
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
+	"net/http"
 
 	"pkg/log/model"
 	"pkg/stackTrace"
@@ -31,19 +31,6 @@ const (
 	LogNone
 )
 
-// TypeToLogOption - Дефолтные настройки для логгирования каждого типа ошибок
-var TypeToLogOption = map[ErrorType]LogOption{
-	BadRequest:       LogAsWarning,
-	NotFound:         LogAsWarning,
-	Teapot:           LogAsWarning,
-	InternalServer:   LogAsError,
-	Forbidden:        LogAsWarning,
-	Unauthorized:     LogAsWarning,
-	ClientReject:     LogAsWarning,
-	BadGateway:       LogAsWarning,
-	ContextCancelled: LogAsWarning,
-}
-
 // New создает новую ошибку
 func (typ ErrorType) New(msg string) Error {
 
@@ -56,9 +43,8 @@ func (typ ErrorType) New(msg string) Error {
 		HumanText:     "",                                     // Проставляется в хэндлере на дефолтное значение или на значение из опциональной функции WithCustomHumanText
 		Err:           errors.New(msg),                        // Исходная ошибка, можно добавить дополнительную ошибку через WithAdditionalError для проведения логики через Is
 		StackTrace:    stackTrace.GetStackTrace(SkipThisCall), // По дефолту получаем стектрейс от места создания этой ошибки, если необходимо урезать часть системных вызовов, можно использовать WithStackTraceJump
-		Params:        make(map[string]string),                // Дополнительные параметры, проставляются через WithParams или забираются из контекста через WithContextParams
+		Params:        make(map[string]any),                   // Дополнительные параметры, проставляются через WithParams или забираются из контекста через WithContextParams
 		SystemInfo:    systemInfo,                             // Проставляется в обработчике ошибок эндпоинта
-		LogAs:         TypeToLogOption[typ],                   // Способ логгирования ошибки, по дефолту зависит от типа ошибки, но можно конфигурировать через WithLogOption
 	}
 }
 
@@ -81,12 +67,10 @@ func (typ ErrorType) Wrap(err error) Error {
 			DeveloperText: "",                                     // Служебное поле, используется для сериализации в JSON
 			HumanText:     "",                                     // Проставляется в хэндлере на дефолтное значение или на значение из опциональной функции WithCustomHumanText
 			Err:           err,                                    // Исходная ошибка, можно добавить дополнительную ошибку через WithAdditionalError для проведения логики через Is
-			StackTrace:    stackTrace.GetStackTrace(SkipThisCall), // По дефолту получаем стектрейс от места создания этой ошибки, если необходимо урезать часть системных вызовов, можно использовать WithStackTraceJump
-			Params:        make(map[string]string),                // Дополнительные параметры, проставляются через WithParams или забираются из контекста через WithContextParams
+			StackTrace:    stackTrace.GetStackTrace(SkipThisCall), // По дефолту получаем стектрейс от места создания этой ошибки, если необходимо урезать часть системных вызовов, можно использовать SkipThisCall
+			Params:        make(map[string]any),                   // Дополнительные параметры, проставляются через WithParams или забираются из контекста через WithContextParams
 			SystemInfo:    systemInfo,                             // Проставляется в обработчике ошибок эндпоинта
-			LogAs:         TypeToLogOption[typ],                   // Способ логгирования ошибки, по дефолту зависит от типа ошибки, но можно конфигурировать через WithLogOption
 		}
-
 	}
 }
 
@@ -95,24 +79,10 @@ func (typ ErrorType) Wrap(err error) Error {
 func CastError(err error) Error {
 	var customErr Error
 	if !As(err, &customErr) {
-		err = InternalServer.Wrap(err).WithStackTraceJump(SkipThisCall).WithParams("error", "Ошибка не обернута, путь неверный")
+		err = Default.Wrap(err).SkipThisCall().WithParams("error", "Ошибка не обернута, путь неверный")
 		_ = As(err, &customErr)
 	}
 	return customErr
-}
-
-// JSON преобразует ошибку в json
-func JSON(err Error) ([]byte, error) {
-
-	// Подставляем значение ошибки в текстовую переменную DeveloperTextError, поскольку сериализатор не умеет
-	// нормально обрабатывать тип error
-	err.DeveloperText = err.Err.Error()
-	byt, e := json.Marshal(err)
-	if e != nil {
-		return nil, InternalServer.Wrap(e)
-	}
-
-	return byt, nil
 }
 
 // As используется для вызова стандартной функции As
@@ -152,18 +122,16 @@ func Is(err error, target error) bool {
 	}
 }
 
-func IsInternal(err error) bool {
-	var customErr Error
-	if As(err, &customErr) {
-		return customErr.ErrorType == InternalServer
-	}
-	return true
-}
-
 func IsContextError(err error) bool {
 	return Is(err, context.Canceled) || Is(err, context.DeadlineExceeded)
 }
 
 func New(text string) error {
 	return errors.New(text)
+}
+
+var Default = ErrorType{
+	HTTPCode:  http.StatusInternalServerError,
+	LogAs:     LogAsError,
+	HumanText: "",
 }

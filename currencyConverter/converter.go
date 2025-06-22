@@ -21,7 +21,7 @@ func Convert(price decimal.Decimal, fromCurrency, toCurrency string, rates map[s
 		return decimal.Decimal{}, errors.InternalServer.New("Exchange rate for one of the currencies not found").WithParams(
 			"fromCurrency", fromCurrency,
 			"toCurrency", toCurrency,
-		).WithStackTraceJump(errors.SkipThisCall)
+		).SkipThisCall()
 	}
 
 	// Конвертируем цену в базовую валюту (USD)
@@ -46,7 +46,7 @@ func Coefficient(fromCurrency, toCurrency string, rates map[string]decimal.Decim
 		return decimal.Decimal{}, errors.InternalServer.New("Exchange rate for one of the currencies not found").WithParams(
 			"fromCurrency", fromCurrency,
 			"toCurrency", toCurrency,
-		).WithStackTraceJump(errors.SkipThisCall)
+		).SkipThisCall()
 	}
 
 	// Конвертируем курс валюты в коэффициент

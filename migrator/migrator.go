@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
-
 	"pkg/errors"
+
 	"pkg/log"
 
 	"github.com/pressly/goose/v3"
@@ -27,7 +27,7 @@ type Migrator struct {
 func NewMigrator(config MigratorConfig) (res Migrator, err error) {
 	provider, err := goose.NewProvider(config.Dialect, config.Conn, config.EmbedMigrations, goose.WithGoMigrations(config.Migrations...), goose.WithAllowOutofOrder(true))
 	if err != nil {
-		return res, errors.InternalServer.Wrap(err)
+		return res, errors.Default.Wrap(err)
 	}
 
 	return Migrator{
@@ -39,7 +39,7 @@ func (m Migrator) Up(ctx context.Context) error {
 
 	result, err := m.provider.Up(ctx)
 	if err != nil {
-		return errors.InternalServer.Wrap(err)
+		return errors.Default.Wrap(err)
 	}
 
 	for _, r := range result {

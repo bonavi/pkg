@@ -4,19 +4,18 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"pkg/errors"
 	"sync/atomic"
 
-	"pkg/errors"
 	"pkg/log/buffer/buffer"
 	"pkg/maps"
-	"pkg/stackTrace"
 )
 
 type consoleLog struct {
 	Level   LogLevel
 	Message string
 	Path    string
-	Params  map[string]string
+	Params  map[string]any
 }
 
 var _ Handler = new(ConsoleHandler)
@@ -51,9 +50,9 @@ func NewTextHandler(w io.Writer, level LogLevel) *ConsoleHandler {
 }
 
 // handle реализует интерфейс Handler.
-func (h *ConsoleHandler) handle(level LogLevel, log any, opts ...Option) {
+func (h *ConsoleHandler) handle(log Log) {
 
-	if h.GetLogLevel().GreaterThan(level) {
+	if h.GetLogLevel().GreaterThan(log.level) {
 		return
 	}
 
@@ -62,9 +61,7 @@ func (h *ConsoleHandler) handle(level LogLevel, log any, opts ...Option) {
 
 	var logStruct consoleLog
 
-	optsStruct := mergeOptions(opts...)
-
-	switch v := log.(type) {
+	switch v := log.content.(type) {
 	case error:
 		customErr := errors.CastError(v)
 		var path string
@@ -73,33 +70,40 @@ func (h *ConsoleHandler) handle(level LogLevel, log any, opts ...Option) {
 		} else {
 			path = ""
 		}
+
+		var message string
+		if customErr.Err != nil {
+			message = customErr.Error()
+		} else {
+			message = "unknown error"
+		}
+
 		logStruct = consoleLog{
-			Level:   level,
-			Message: customErr.Error(),
+			Level:   log.level,
+			Message: message,
 			Path:    path,
-			Params:  maps.Join(optsStruct.params, customErr.Params),
+			Params:  maps.Join(log.params, customErr.Params),
 		}
 	default:
-		stackTrace := stackTrace.GetStackTrace(errors.SkipPreviousCaller)
 		var path string
-		if len(stackTrace) > 0 {
-			path = stackTrace[0]
+		if len(log.stackTrace) > 0 {
+			path = log.stackTrace[0]
 		} else {
 			path = ""
 		}
 		logStruct = consoleLog{
-			Level:   level,
+			Level:   log.level,
 			Message: fmt.Sprintf("%v", v),
 			Path:    path,
-			Params:  optsStruct.params,
+			Params:  log.params,
 		}
 	}
 
 	var delimer byte = ' '
 
-	state.buf.WriteString(getColor(level))
+	state.buf.WriteString(getColor(log.level))
 
-	state.buf.WriteString(level.ToUpper())
+	state.buf.WriteString(log.level.ToUpper())
 	state.buf.WriteString(colorReset)
 	state.buf.WriteByte(delimer)
 
@@ -109,11 +113,11 @@ func (h *ConsoleHandler) handle(level LogLevel, log any, opts ...Option) {
 
 	for key, value := range logStruct.Params {
 		state.buf.WriteByte(' ')
-		state.buf.WriteString(getColor(level))
+		state.buf.WriteString(getColor(log.level))
 		state.buf.WriteString(key)
 		state.buf.WriteString(colorReset)
 		state.buf.WriteByte('=')
-		state.buf.WriteString(value)
+		state.buf.WriteString(fmt.Sprintf("%+v", value))
 	}
 
 	state.buf.WriteByte('\n')

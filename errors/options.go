@@ -4,54 +4,13 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"pkg/contextMap"
 )
-
-type contextKey int
-
-const errorsParamsKey contextKey = 1
-
-type ErrorsParams struct {
-	data map[string]string
-}
-
-func GetErrorsParams(ctx context.Context) map[string]string {
-
-	errorsParams := make(map[string]string)
-
-	if ctx == nil {
-		return errorsParams
-	}
-
-	if paramsAny := ctx.Value(errorsParamsKey); paramsAny != nil {
-		if ep, ok := paramsAny.(ErrorsParams); ok {
-			errorsParams = maps.Clone(ep.data)
-		}
-	}
-	return errorsParams
-}
-
-func AddErrorsParams(ctx context.Context, paramsKV ...string) context.Context {
-	if len(paramsKV) == 0 {
-		return ctx
-	}
-
-	paramsCopy := maps.Clone(GetErrorsParams(ctx))
-
-	for i := 0; i < len(paramsKV); i += 2 {
-		if i+1 < len(paramsKV) {
-			paramsCopy[paramsKV[i]] = paramsKV[i+1]
-		} else {
-			paramsCopy[paramsKV[i]] = ""
-		}
-	}
-
-	return context.WithValue(ctx, errorsParamsKey, ErrorsParams{data: paramsCopy})
-}
 
 func (e Error) WithContextParams(ctx context.Context) Error {
 
 	// Получаем параметры из контекста
-	contextParams := GetErrorsParams(ctx)
+	contextParams := contextMap.GetMap(ctx)
 
 	if len(contextParams) == 0 {
 		return e
@@ -78,13 +37,37 @@ func (e Error) WithParams(parameters ...any) Error {
 	return e
 }
 
-func (e Error) WithStackTraceJump(p int) Error {
+func (e Error) SkipThisCall() Error {
 
 	// Если стектрейс записан и его длина больше скипа
-	if e.StackTrace != nil && len(e.StackTrace) > p {
+	if e.StackTrace != nil && len(e.StackTrace) > SkipThisCall-1 {
 
 		// Удаляем первые p элементов стектрейса
-		e.StackTrace = e.StackTrace[p:]
+		e.StackTrace = e.StackTrace[SkipThisCall-1:]
+	}
+
+	return e
+}
+
+func (e Error) SkipPreviousCaller() Error {
+
+	// Если стектрейс записан и его длина больше скипа
+	if e.StackTrace != nil && len(e.StackTrace) > SkipPreviousCaller-1 {
+
+		// Удаляем первые p элементов стектрейса
+		e.StackTrace = e.StackTrace[SkipPreviousCaller-1:]
+	}
+
+	return e
+}
+
+func (e Error) Skip2PreviousCallers() Error {
+
+	// Если стектрейс записан и его длина больше скипа
+	if e.StackTrace != nil && len(e.StackTrace) > Skip2PreviousCallers-1 {
+
+		// Удаляем первые p элементов стектрейса
+		e.StackTrace = e.StackTrace[Skip2PreviousCallers-1:]
 	}
 
 	return e
@@ -93,7 +76,7 @@ func (e Error) WithStackTraceJump(p int) Error {
 func (e Error) WithLogOption(p LogOption) Error {
 
 	// Меняем способ логгирования этой ошибки
-	e.LogAs = p
+	e.ErrorType.LogAs = p
 
 	return e
 }

@@ -24,3 +24,7 @@ test: mockery
 	go test ./...
 
 deploy-check: test lint
+
+# Чтобы обновить сериализатор json структуры лога
+easyjson:
+	easyjson log/jsonHandler.go

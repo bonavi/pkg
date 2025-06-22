@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-
 	"pkg/errors"
 )
 
@@ -15,7 +14,7 @@ func DefaultResponseEncoder(ctx context.Context, w http.ResponseWriter, response
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		return errors.InternalServer.Wrap(err)
+		return errors.ErrorType{HTTPCode: 500}.Wrap(err)
 	}
 	return nil
 }

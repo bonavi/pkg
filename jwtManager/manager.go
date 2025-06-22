@@ -2,6 +2,7 @@ package jwtManager
 
 import (
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -12,7 +13,10 @@ import (
 )
 
 var (
-	ErrTokenExpired = errors.New("tokenExpired")
+	ErrTokenExpired = errors.ErrorType{
+		HTTPCode: 0,
+		LogAs:    0,
+	}.New("tokenExpired")
 )
 
 type JWTManager struct {
@@ -52,7 +56,7 @@ const (
 func GenerateToken[T any](tokenType TokenType, customClaims T) (string, error) {
 
 	if jwtManager == nil {
-		return "", errors.InternalServer.New("JWTManager is not initialized")
+		return "", errors.Default.New("JWTManager is not initialized")
 	}
 
 	claims := MyCustomClaims[T]{
@@ -73,7 +77,7 @@ func GenerateToken[T any](tokenType TokenType, customClaims T) (string, error) {
 
 	tokenStr, err := token.SignedString(jwtManager.accessTokenSigningKey)
 	if err != nil {
-		return "", errors.InternalServer.Wrap(err)
+		return "", errors.Default.Wrap(err)
 	}
 
 	return tokenStr, nil
@@ -85,22 +89,22 @@ func ParseToken[T any](reqToken string, tokenType TokenType) (T, error) {
 
 	// Если менеджер не инициализирован, возвращаем ошибку
 	if jwtManager == nil {
-		return typeZeroValue, errors.InternalServer.New("JWTManager is not initialized").
-			WithStackTraceJump(errors.SkipThisCall)
+		return typeZeroValue, errors.Default.New("JWTManager is not initialized").
+			SkipThisCall()
 	}
 
 	// Если токен пустой, возвращаем ошибку
 	if reqToken == "" {
-		return typeZeroValue, errors.Unauthorized.New("JWT-token is empty").
-			WithStackTraceJump(errors.SkipThisCall)
+		return typeZeroValue, errors.ErrorType{HTTPCode: http.StatusUnauthorized}.New("JWT-token is empty").
+			SkipThisCall()
 	}
 
 	// Парсим токен
 	token, jwtErr := jwt.ParseWithClaims(reqToken, &MyCustomClaims[T]{}, func(token *jwt.Token) (i any, err error) { //nolint:exhaustruct
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.InternalServer.New("Unexpected signing method").
+			return nil, errors.Default.New("Unexpected signing method").
 				WithParams("token", token.Header["alg"]).
-				WithStackTraceJump(errors.SkipThisCall)
+				SkipThisCall()
 		}
 
 		return jwtManager.accessTokenSigningKey, nil
@@ -119,27 +123,27 @@ func ParseToken[T any](reqToken string, tokenType TokenType) (T, error) {
 			case validationError.Errors == jwt.ValidationErrorExpired:
 
 				// Если токен истек, определяем ошибку с errorf, чтобы потом вернуть
-				jwtErr = errors.Unauthorized.Wrap(jwtErr).WithStackTraceJump(errors.SkipPreviousCaller).WithAdditionalError(ErrTokenExpired)
+				jwtErr = errors.ErrorType{HTTPCode: http.StatusUnauthorized}.Wrap(jwtErr).SkipPreviousCaller().WithAdditionalError(ErrTokenExpired)
 
 			// Если другая ошибка, просто возвращаем ее
 			default:
-				return typeZeroValue, errors.Unauthorized.Wrap(jwtErr).WithStackTraceJump(errors.SkipPreviousCaller)
+				return typeZeroValue, errors.ErrorType{HTTPCode: http.StatusUnauthorized}.Wrap(jwtErr).SkipPreviousCaller()
 			}
 
 		} else { // Если ошибка не валидатора
-			return typeZeroValue, errors.InternalServer.Wrap(jwtErr).WithStackTraceJump(errors.SkipPreviousCaller)
+			return typeZeroValue, errors.Default.Wrap(jwtErr).SkipPreviousCaller()
 		}
 	}
 
 	// Если ошибок нет, пробуем получить кастомные клеймы
 	claims, ok := token.Claims.(*MyCustomClaims[T])
 	if !ok {
-		return typeZeroValue, errors.InternalServer.New("Error get user claims from token")
+		return typeZeroValue, errors.Default.New("Error get user claims from token")
 	}
 
 	if claims.TokenType != tokenType {
-		return claims.CustomClaims, errors.Forbidden.New(fmt.Sprintf("passed token is not %s token", tokenType)).
-			WithStackTraceJump(errors.SkipThisCall)
+		return claims.CustomClaims, errors.ErrorType{HTTPCode: http.StatusForbidden}.New(fmt.Sprintf("passed token is not %s token", tokenType)).
+			SkipThisCall()
 	}
 
 	// Обрабатываем ошибку парсера jwt

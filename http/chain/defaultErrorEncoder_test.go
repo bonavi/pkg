@@ -53,7 +53,7 @@ func TestEncodeErrorResponse(t *testing.T) {
 			if err := json.NewDecoder(w.Body).Decode(&getCustomErr); err != nil {
 				t.Fatalf("Ошибка декодирования: %v", err)
 			}
-			getCustomErr.ErrorType = errors.ErrorType(w.Code)
+			getCustomErr.ErrorType = errors.UserErrorType(w.Code)
 
 			testUtils.CheckError(t, tt.wantError, getCustomErr, false)
 

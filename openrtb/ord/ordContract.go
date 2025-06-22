@@ -1,6 +1,26 @@
 package ord
 
-import "pkg/errors"
+import (
+	errors "pkg/errors"
+	"pkg/log"
+)
+
+var ValidationErr = errors.ErrorType{
+	HTTPCode: 400,
+	LogAs:    errors.LogAsWarning,
+}
+
+var (
+	ErrIDIsRequired               = ValidationErr.New("ID is required").wi
+	ErrAdoIDIsRequired            = ValidationErr.New("AdoID is required")
+	ErrUnifiedIDIsRequired        = ValidationErr.New("UnifiedID is required")
+	ErrTypeIsRequired             = ValidationErr.New("Type is required")
+	ErrNumberIsRequired           = ValidationErr.New("Number is required")
+	ErrSubjectTypeIsRequired      = ValidationErr.New("SubjectType is required")
+	ErrSignDateIsRequired         = ValidationErr.New("SignDate is required")
+	ErrAmountIsRequired           = ValidationErr.New("Amount is required")
+	ErrParentContractIDIsRequired = ValidationErr.New("ParentContractID is required for amendments")
+)
 
 type ORDContract struct {
 
@@ -48,7 +68,7 @@ func (o *ORDContract) Validate() error {
 	}
 
 	if o.AdoID == "" {
-		return errors.BadRequest.New("AdoID is required")
+		return ErrAdoIDIsRequired.WithParams("field", "ado_id")
 	}
 
 	if o.UnifiedID == nil {

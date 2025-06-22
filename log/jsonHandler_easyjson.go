@@ -70,15 +70,21 @@ func easyjson65a741d4DecodePkgLog(in *jlexer.Lexer, out *jsonLog) {
 			} else {
 				in.Delim('{')
 				if !in.IsDelim('}') {
-					out.Params = make(map[string]string)
+					out.Params = make(map[string]interface{})
 				} else {
 					out.Params = nil
 				}
 				for !in.IsDelim('}') {
 					key := string(in.String())
 					in.WantColon()
-					var v2 string
-					v2 = string(in.String())
+					var v2 interface{}
+					if m, ok := v2.(easyjson.Unmarshaler); ok {
+						m.UnmarshalEasyJSON(in)
+					} else if m, ok := v2.(json.Unmarshaler); ok {
+						_ = m.UnmarshalJSON(in.Raw())
+					} else {
+						v2 = in.Interface()
+					}
 					(out.Params)[key] = v2
 					in.WantComma()
 				}
@@ -140,7 +146,13 @@ func easyjson65a741d4EncodePkgLog(out *jwriter.Writer, in jsonLog) {
 				}
 				out.String(string(v5Name))
 				out.RawByte(':')
-				out.String(string(v5Value))
+				if m, ok := v5Value.(easyjson.Marshaler); ok {
+					m.MarshalEasyJSON(out)
+				} else if m, ok := v5Value.(json.Marshaler); ok {
+					out.Raw(m.MarshalJSON())
+				} else {
+					out.Raw(json.Marshal(v5Value))
+				}
 			}
 			out.RawByte('}')
 		}

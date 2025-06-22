@@ -16,6 +16,6 @@ func (l LogFormat) Validate() error {
 	case JSONFormat, TextFormat:
 		return nil
 	default:
-		return errors.InternalServer.New("invalid jsonLog format")
+		return errors.Default.New("invalid jsonLog format")
 	}
 }
