@@ -123,15 +123,15 @@ func ParseToken[T any](reqToken string, tokenType TokenType) (T, error) {
 			case validationError.Errors == jwt.ValidationErrorExpired:
 
 				// Если токен истек, определяем ошибку с errorf, чтобы потом вернуть
-				jwtErr = errors.ErrorType{HTTPCode: http.StatusUnauthorized}.Wrap(jwtErr).SkipPreviousCaller().WithAdditionalError(ErrTokenExpired)
+				jwtErr = errors.ErrorType{HTTPCode: http.StatusUnauthorized}.Wrap(jwtErr).SkipThisCall().WithAdditionalError(ErrTokenExpired)
 
 			// Если другая ошибка, просто возвращаем ее
 			default:
-				return typeZeroValue, errors.ErrorType{HTTPCode: http.StatusUnauthorized}.Wrap(jwtErr).SkipPreviousCaller()
+				return typeZeroValue, errors.ErrorType{HTTPCode: http.StatusUnauthorized}.Wrap(jwtErr).SkipThisCall()
 			}
 
 		} else { // Если ошибка не валидатора
-			return typeZeroValue, errors.Default.Wrap(jwtErr).SkipPreviousCaller()
+			return typeZeroValue, errors.Default.Wrap(jwtErr).SkipThisCall()
 		}
 	}
 
