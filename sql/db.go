@@ -34,14 +34,14 @@ type DB struct {
 func Open(driverName string, url string) (*DB, error) {
 	db, err := sqlx.Open(driverName, url)
 	if err != nil {
-		return nil, wrapSQLError(err)
+		return nil, wrapSQLError(context.Background(), err)
 	}
 	return &DB{db}, nil
 }
 
 func (s *DB) Close() error {
 	if err := s.DB.Close(); err != nil {
-		return wrapSQLError(err)
+		return wrapSQLError(context.Background(), err)
 	}
 	return nil
 }
@@ -49,14 +49,14 @@ func (s *DB) Close() error {
 func (s *DB) Begin(ctx context.Context) (*Tx, error) {
 	tx, err := s.DB.BeginTxx(ctx, nil)
 	if err != nil {
-		return nil, wrapSQLError(err)
+		return nil, wrapSQLError(ctx, err)
 	}
 	return &Tx{tx}, nil
 }
 
 func (s *DB) Ping(ctx context.Context) error {
 	if err := s.DB.PingContext(ctx); err != nil {
-		return wrapSQLError(err)
+		return wrapSQLError(ctx, err)
 	}
 	return nil
 }
@@ -86,7 +86,7 @@ func (s *DB) Select(ctx context.Context, dest any, q sq.Sqlizer) (err error) {
 
 	// Обрабатываем ошибки
 	if err != nil {
-		return wrapSQLError(err)
+		return wrapSQLError(ctx, err)
 	}
 
 	return nil
@@ -113,7 +113,7 @@ func (s *DB) Get(ctx context.Context, dest any, q sq.Sqlizer) (err error) {
 
 	// Обрабатываем ошибки
 	if err != nil {
-		return wrapSQLError(err)
+		return wrapSQLError(ctx, err)
 	}
 
 	return nil
@@ -142,7 +142,7 @@ func (s *DB) Query(ctx context.Context, q sq.Sqlizer) (_ *Rows, err error) {
 
 	// Обрабатываем ошибки
 	if err != nil {
-		return nil, wrapSQLError(err)
+		return nil, wrapSQLError(ctx, err)
 	}
 
 	return rows, nil
@@ -195,7 +195,7 @@ func (s *DB) Prepare(ctx context.Context, q sq.Sqlizer) (_ *Stmt, err error) {
 
 	// Обрабатываем ошибки
 	if err != nil {
-		return nil, wrapSQLError(err)
+		return nil, wrapSQLError(ctx, err)
 	}
 
 	return stmt, nil
@@ -206,7 +206,7 @@ func (s *DB) Exec(ctx context.Context, q sq.Sqlizer) (err error) {
 	// Формируем запрос из билдера
 	query, args, err := ConvertBuilderToSQL(q)
 	if err != nil {
-		return errors.Default.Wrap(err)
+		return errors.Default.Wrap(err).WithContextParams(ctx)
 	}
 
 	// Извлекаем транзакцию из контекста
@@ -222,7 +222,7 @@ func (s *DB) Exec(ctx context.Context, q sq.Sqlizer) (err error) {
 
 	// Обрабатываем ошибки
 	if err != nil {
-		return wrapSQLError(err)
+		return wrapSQLError(ctx, err)
 	}
 
 	return nil
@@ -251,7 +251,7 @@ func (s *DB) ExecWithLastInsertID(ctx context.Context, q sq.Sqlizer) (id uint32,
 
 	// Обрабатываем ошибки
 	if err != nil {
-		return 0, wrapSQLError(err)
+		return 0, wrapSQLError(ctx, err)
 	}
 
 	return id, nil
@@ -280,27 +280,27 @@ func (s *DB) ExecWithRowsAffected(ctx context.Context, q sq.Sqlizer) (_ uint32, 
 
 	// Обрабатываем ошибки
 	if err != nil {
-		return 0, wrapSQLError(err)
+		return 0, wrapSQLError(ctx, err)
 	}
 
 	// Получаем количество затронутых строк
 	affected, err := result.RowsAffected()
 	if err != nil {
-		return 0, wrapSQLError(err)
+		return 0, wrapSQLError(ctx, err)
 	}
 
 	return uint32(affected), nil
 }
 
-func wrapSQLError(err error) error {
+func wrapSQLError(ctx context.Context, err error) error {
 
 	switch {
 	case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
-		return errors.Default.Wrap(err).SkipPreviousCaller()
+		return errors.Default.Wrap(err).SkipPreviousCaller().WithContextParams(ctx)
 	case errors.Is(err, sql.ErrNoRows):
-		return errors.ErrorType{HTTPCode: http.StatusNotFound}.Wrap(err).SkipPreviousCaller()
+		return errors.ErrorType{HTTPCode: http.StatusNotFound}.Wrap(err).SkipPreviousCaller().WithContextParams(ctx)
 	default:
-		return errors.Default.Wrap(err).SkipPreviousCaller()
+		return errors.Default.Wrap(err).SkipPreviousCaller().WithContextParams(ctx)
 	}
 }
 

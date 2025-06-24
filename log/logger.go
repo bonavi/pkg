@@ -36,7 +36,7 @@ var logger = &loggerSettings{
 		Build:       "",
 		Env:         "",
 	},
-	handlers: []Handler{NewTextHandler(os.Stdout, LevelDebug)},
+	handlers: []Handler{NewJSONHandler(os.Stdout, LevelDebug)},
 }
 
 // Init конфигурирует логгер

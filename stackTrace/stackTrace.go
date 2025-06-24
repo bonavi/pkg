@@ -14,6 +14,11 @@ type stackTracer struct {
 
 var stackTracerInstance = &stackTracer{
 	serviceName: "",
+	isEnabled:   atomic.Bool{},
+}
+
+func init() {
+	stackTracerInstance.isEnabled.Store(true)
 }
 
 func SetIsEnabled(enabled bool) {

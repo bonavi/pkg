@@ -23,7 +23,7 @@ type TracerConfig struct {
 	OtlInsecure     bool   `env:"OTLP_INSECURE"`
 }
 
-func StartTracing(ctx context.Context, cfg TracerConfig, serviceName string) error {
+func StartTracing(cfg TracerConfig, serviceName string) error {
 
 	if !cfg.IsEnabled {
 		return nil
@@ -47,7 +47,7 @@ func StartTracing(ctx context.Context, cfg TracerConfig, serviceName string) err
 		otlptracehttp.NewClient(options...),
 	)
 	if err != nil {
-		return errors.InternalServer.Wrap(ctx, err)
+		return errors.Default.Wrap(err)
 	}
 
 	tracerprovider := trace.NewTracerProvider(
@@ -73,7 +73,7 @@ func StartTracing(ctx context.Context, cfg TracerConfig, serviceName string) err
 		otlploghttp.WithInsecure(),
 	)
 	if err != nil {
-		return errors.InternalServer.Wrap(ctx, err)
+		return errors.Default.Wrap(err)
 	}
 
 	// Create the logger provider
