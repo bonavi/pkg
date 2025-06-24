@@ -29,7 +29,7 @@ func Decode(
 ) (err error) {
 
 	// Проверяем типы данных
-	if err = reflectUtils.CheckPointerToStruct(ctx, dest); err != nil {
+	if err = reflectUtils.CheckPointerToStruct(dest); err != nil {
 		return err
 	}
 
@@ -44,9 +44,9 @@ func Decode(
 			break
 		}
 		if err != nil {
-			return errors.BadRequest.Wrap(ctx, err,
-				errors.SkipThisCallOption(),
-			)
+			return errors.Default.Wrap(err).
+				SkipThisCall().
+				WithContextParams(ctx)
 		}
 	}
 
@@ -89,9 +89,7 @@ func DecodeFiber(
 		err = json.Unmarshal(c.Body(), &dest)
 	}
 	if err != nil {
-		return errors.BadRequest.Wrap(ctx, err,
-			errors.SkipThisCallOption(),
-		)
+		return errors.Default.Wrap(err).WithContextParams(ctx).SkipThisCall()
 	}
 
 	return nil
