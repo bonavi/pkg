@@ -39,8 +39,8 @@ func (typ ErrorType) New(msg string) Error {
 	// Создаем новую ошибку
 	return Error{
 		ErrorType:     typ,                                    // Меняется при повторном оборачивании через Wrap
-		DeveloperText: "",                                     // Служебное поле, используется для сериализации в JSON
-		HumanText:     "",                                     // Проставляется в хэндлере на дефолтное значение или на значение из опциональной функции WithCustomHumanText
+		DeveloperText: msg,                                    // Служебное поле, используется для сериализации в JSON
+		HumanText:     typ.HumanText,                          // Проставляется в хэндлере на дефолтное значение или на значение из опциональной функции WithCustomHumanText
 		Err:           errors.New(msg),                        // Исходная ошибка, можно добавить дополнительную ошибку через WithAdditionalError для проведения логики через Is
 		StackTrace:    stackTrace.GetStackTrace(SkipThisCall), // По дефолту получаем стектрейс от места создания этой ошибки, если необходимо урезать часть системных вызовов, можно использовать WithStackTraceJump
 		Params:        make(map[string]any),                   // Дополнительные параметры, проставляются через WithParams или забираются из контекста через WithContextParams
@@ -61,11 +61,16 @@ func (typ ErrorType) Wrap(err error) Error {
 
 	} else { // Если это не обернутая ошибка
 
+		var errText string
+		if err != nil {
+			errText = err.Error()
+		}
+
 		// Если это не обернутая ошибка, то создаем новую
 		return Error{
 			ErrorType:     typ,                                    // Меняется при повторном оборачивании через Wrap
-			DeveloperText: "",                                     // Служебное поле, используется для сериализации в JSON
-			HumanText:     "",                                     // Проставляется в хэндлере на дефолтное значение или на значение из опциональной функции WithCustomHumanText
+			DeveloperText: errText,                                // Служебное поле, используется для сериализации в JSON
+			HumanText:     typ.HumanText,                          // Проставляется в хэндлере на дефолтное значение или на значение из опциональной функции WithCustomHumanText
 			Err:           err,                                    // Исходная ошибка, можно добавить дополнительную ошибку через WithAdditionalError для проведения логики через Is
 			StackTrace:    stackTrace.GetStackTrace(SkipThisCall), // По дефолту получаем стектрейс от места создания этой ошибки, если необходимо урезать часть системных вызовов, можно использовать SkipThisCall
 			Params:        make(map[string]any),                   // Дополнительные параметры, проставляются через WithParams или забираются из контекста через WithContextParams

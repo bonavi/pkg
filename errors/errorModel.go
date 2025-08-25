@@ -33,11 +33,11 @@ type Error struct {
 	// Необходимо воспользоваться errors.SkipThisCall(errors.<const>)
 	// const = SkipThisCall - начать стектрейс на один уровень выше враппера errors.Type.Wrap по дереву
 	// const = SkipPreviousCaller и остальные работают по аналогии, пропуская все больше уровней стека вызовов
-	StackTrace []string `json:"path"`
+	StackTrace []string `json:"stackTrace"`
 
 	// Дополнительные параметры, направленные на дополнение ошибки контекстом, которые проставляются
 	// Через errors.WithParams(key1, value1, key2, value2, ...)
-	Params map[string]any `json:"parameters"`
+	Params map[string]any `json:"parameters,omitempty"`
 
 	// Служебное поле, которое автоматически заполняется в функции middleware.DefaultErrorEncoder
 	// вспомогательными данными из контекста

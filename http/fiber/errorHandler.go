@@ -30,10 +30,6 @@ var DefaultErrorHandler = func(ctx *fiber.Ctx, err error) error {
 	// на вызовы начнет алертить система оповещения и разработчик быстро пофиксит проблему
 	customErr := errors.CastError(err)
 
-	// Проставляем HumanText по дефолту, если его не определили при создании ошибки
-	if customErr.HumanText != "" {
-		customErr.HumanText = errors.humanTextByLevel[customErr.ErrorType]
-	}
 	customErr.DeveloperText = customErr.Err.Error()
 
 	// Получаем идентификатор запроса

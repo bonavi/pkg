@@ -21,6 +21,8 @@ func DefaultErrorEncoder(ctx context.Context, w http.ResponseWriter, er error) {
 	// Кастуем пришедшую ошибку
 	err := errors.CastError(er)
 
+	err.SystemInfo = log.GetSystemInfo()
+
 	log.LogError(err)
 
 	// Прописываем тип контента, который будем отправлять клиенту
