@@ -7,6 +7,7 @@ import (
 	"reflect"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/gorilla/schema"
 
 	"pkg/decimal"
@@ -37,7 +38,10 @@ func Decode(
 	for _, decodeSchema := range decodeSchemas {
 		switch decodeSchema {
 		case DecodeSchema:
-			err = schema.NewDecoder().Decode(dest, r.URL.Query())
+			decoder := schema.NewDecoder()
+			decoder.RegisterConverter(decimal.Decimal{}, decimalConverter) //nolint:exhaustruct
+			decoder.RegisterConverter(uuid.UUID{}, uuidConverter)          //nolint:exhaustruct
+			err = decoder.Decode(dest, r.URL.Query())
 		case DecodeJSON:
 			err = json.NewDecoder(r.Body).Decode(dest)
 		default:
@@ -59,6 +63,14 @@ var decimalConverter = func(val string) reflect.Value {
 		return reflect.Value{}
 	}
 	return reflect.ValueOf(dec)
+}
+
+var uuidConverter = func(val string) reflect.Value {
+	uuid, err := uuid.Parse(val)
+	if err != nil {
+		return reflect.Value{}
+	}
+	return reflect.ValueOf(uuid)
 }
 
 func DecodeFiber(
@@ -84,6 +96,7 @@ func DecodeFiber(
 		}
 		decoder := schema.NewDecoder()
 		decoder.RegisterConverter(decimal.Decimal{}, decimalConverter) //nolint:exhaustruct
+		decoder.RegisterConverter(uuid.UUID{}, uuidConverter)          //nolint:exhaustruct
 		err = decoder.Decode(dest, classicQueries)
 	case DecodeJSON:
 		err = json.Unmarshal(c.Body(), &dest)

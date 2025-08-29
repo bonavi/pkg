@@ -15,7 +15,7 @@ func Validate(data any) error {
 
 	// Валидируем структуру
 	if err := ZeroValue(data); err != nil {
-		return err
+		return errors.Default.Wrap(err).SkipThisCall()
 	}
 
 	// Если структура реализует интерфейс валидатора, то валидируем ее с помощью функции
@@ -112,7 +112,7 @@ func ZeroValue(requestStruct any) error {
 			params = append(params, tag, "required")
 		}
 		return errors.Default.New("Required field is not filled").
-			WithParams(params...)
+			WithParams(params...).SkipThisCall()
 	}
 
 	return nil

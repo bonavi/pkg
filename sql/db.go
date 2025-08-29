@@ -3,8 +3,10 @@ package sql
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 	"pkg/errors"
+	"pkg/log"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
@@ -317,6 +319,8 @@ func ConvertBuilderToSQL(q sq.Sqlizer) (string, []any, error) {
 	if err != nil {
 		return "", nil, errors.Default.Wrap(err)
 	}
+
+	log.Debug(fmt.Sprintf("%s; %v", query, args))
 
 	return query, args, nil
 }
