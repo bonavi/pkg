@@ -2,68 +2,52 @@ package cache
 
 import (
 	"sync"
-	"time"
 )
 
 type itemCacheItem[V any] struct {
-	Value      V
-	Expiration int64
+	Value V
 }
 
 type ItemCache[K comparable, V any] struct {
-	mu         sync.RWMutex
-	items      map[K]itemCacheItem[V]
-	defaultTTL time.Duration
+	mu    sync.RWMutex
+	items map[K]itemCacheItem[V]
 }
 
-func NewItemCache[K comparable, V any](defaultTTL time.Duration) *ItemCache[K, V] {
+func NewItemCache[K comparable, V any]() *ItemCache[K, V] {
 	return &ItemCache[K, V]{
-		mu:         sync.RWMutex{},
-		items:      make(map[K]itemCacheItem[V]),
-		defaultTTL: defaultTTL,
+		mu:    sync.RWMutex{},
+		items: make(map[K]itemCacheItem[V]),
 	}
 }
 
-func (c *ItemCache[K, V]) Set(key K, value V, ttl ...time.Duration) {
+func (c *ItemCache[K, V]) Set(key K, value V) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	var expiration int64
-	if len(ttl) > 0 {
-		expiration = time.Now().Add(ttl[0]).UnixNano()
-	} else {
-		expiration = time.Now().Add(c.defaultTTL).UnixNano()
-	}
-
 	c.items[key] = itemCacheItem[V]{
-		Value:      value,
-		Expiration: expiration,
+		Value: value,
 	}
 }
 
-func (c *ItemCache[K, V]) Get(key K) (V, bool) {
+func (c *ItemCache[K, V]) Get(key K) V {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
 	item, found := c.items[key]
-	if !found || time.Now().UnixNano() > item.Expiration {
-		var zero V
-		return zero, false
+	if !found {
+		return item.Value
 	}
 
-	return item.Value, true
+	return item.Value
 }
 
 func (c *ItemCache[K, V]) PopAll() map[K]V {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	now := time.Now().UnixNano()
 	result := make(map[K]V)
 	for key, item := range c.items {
-		if now < item.Expiration {
-			result[key] = item.Value
-		}
+		result[key] = item.Value
 	}
 
 	c.items = make(map[K]itemCacheItem[V])
@@ -71,39 +55,28 @@ func (c *ItemCache[K, V]) PopAll() map[K]V {
 	return result
 }
 
-func (c *ItemCache[K, V]) ChangeOrCreate(key K, f func(V) V, ttl ...time.Duration) {
+func (c *ItemCache[K, V]) ChangeOrCreate(key K, f func(V) V) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-
-	now := time.Now().UnixNano()
 
 	// Ищем запись по ключу
 	item, found := c.items[key]
 
-	// Если запись не найдена или просрочена
-	if !found || now > item.Expiration {
+	// Если запись не найдена
+	if !found {
 
 		// Создаем новую запись
-		var expiration int64
-		if len(ttl) > 0 {
-			expiration = time.Now().Add(ttl[0]).UnixNano()
-		} else {
-			expiration = time.Now().Add(c.defaultTTL).UnixNano()
-		}
-
 		var emptyType V
 
 		c.items[key] = itemCacheItem[V]{
-			Value:      f(emptyType),
-			Expiration: expiration,
+			Value: f(emptyType),
 		}
 
 	} else { // Если найдена
 
 		// Обновляем запись
 		c.items[key] = itemCacheItem[V]{
-			Value:      f(item.Value),
-			Expiration: item.Expiration,
+			Value: f(item.Value),
 		}
 	}
 }
