@@ -47,8 +47,8 @@ func NewNetworkManager(
 
 func (n *NetworkManager) SendRequest(ctx context.Context, req SendRequestReq) (res SendRequestRes, err error) {
 
-	// Создаем HTTP-запрос на логин
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, req.URL, bytes.NewReader(req.Body))
+	// Создаем HTTP-запрос
+	httpReq, err := http.NewRequestWithContext(ctx, req.Method, req.URL, bytes.NewReader(req.Body))
 	if err != nil {
 		return res, err
 	}
