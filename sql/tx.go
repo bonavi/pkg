@@ -1,8 +1,6 @@
 package sql
 
 import (
-	"context"
-
 	"github.com/jmoiron/sqlx"
 )
 
@@ -17,14 +15,14 @@ type Tx struct {
 
 func (s *Tx) Commit() error {
 	if err := s.Tx.Commit(); err != nil {
-		return wrapSQLError(context.Background(), err)
+		return wrapSQLError(err)
 	}
 	return nil
 }
 
 func (s *Tx) Rollback() error {
 	if err := s.Tx.Rollback(); err != nil {
-		return wrapSQLError(context.Background(), err)
+		return wrapSQLError(err)
 	}
 	return nil
 }

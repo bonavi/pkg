@@ -1,6 +1,6 @@
 package openrtb
 
-import "encoding/json"
+import "pkg/pointer"
 
 // A quantifiable often historical data point about an impression.
 type Metric struct {
@@ -22,15 +22,19 @@ type Metric struct {
 	Vendor string `json:"vendor,omitempty" bson:"vendor"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
-	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`
+	Ext *MetricsExt `json:"ext,omitempty" bson:"ext"`
 }
 
+type MetricsExt struct{}
+
+func (m *MetricsExt) copy() MetricsExt {
+	return MetricsExt{}
+}
 func (m *Metric) Copy() Metric {
 
-	var ext []byte
-	if len(m.Ext) != 0 {
-		ext = make([]byte, len(m.Ext))
-		copy(ext, m.Ext)
+	var ext *MetricsExt
+	if m.Ext != nil {
+		ext = pointer.Pointer(m.Ext.copy())
 	}
 
 	return Metric{

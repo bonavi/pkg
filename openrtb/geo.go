@@ -1,6 +1,6 @@
 package openrtb
 
-import "encoding/json"
+import "pkg/pointer"
 
 // Location of the device or user’s home base depending on the parent object.
 type Geo struct {
@@ -53,15 +53,19 @@ type Geo struct {
 	UTCOffset int `json:"utcoffset,omitempty" bson:"utcoffset"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
-	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`
+	Ext *GeoExt `json:"ext,omitempty" bson:"ext"`
 }
 
+type GeoExt struct{}
+
+func (d *GeoExt) copy() GeoExt {
+	return GeoExt{}
+}
 func (g *Geo) Copy() Geo {
 
-	var ext []byte
-	if len(g.Ext) != 0 {
-		ext = make([]byte, len(g.Ext))
-		copy(ext, g.Ext)
+	var ext *GeoExt
+	if g.Ext != nil {
+		ext = pointer.Pointer(g.Ext.copy())
 	}
 
 	return Geo{

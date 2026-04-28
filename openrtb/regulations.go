@@ -1,6 +1,6 @@
 package openrtb
 
-import "encoding/json"
+import "pkg/pointer"
 
 // Regulatory conditions in effect for all impressions in this bid request.
 type Regulations struct {
@@ -11,15 +11,20 @@ type Regulations struct {
 	COPPA int `json:"coppa,omitempty" bson:"coppa"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
-	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`
+	Ext *RegulationExt `json:"ext,omitempty" bson:"ext"`
+}
+
+type RegulationExt struct{}
+
+func (r *RegulationExt) copy() RegulationExt {
+	return RegulationExt{}
 }
 
 func (r *Regulations) Copy() Regulations {
 
-	var ext []byte
-	if len(r.Ext) != 0 {
-		ext = make([]byte, len(r.Ext))
-		copy(ext, r.Ext)
+	var ext *RegulationExt
+	if r.Ext != nil {
+		ext = pointer.Pointer(r.Ext.copy())
 	}
 
 	return Regulations{

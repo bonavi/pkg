@@ -99,7 +99,22 @@ type Impression struct {
 	IFrameBusters []string `json:"iframebuster,omitempty" bson:"iframebuster"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
-	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`
+	Ext *ImpressionsExt `json:"ext,omitempty" bson:"ext"`
+}
+
+type ImpressionsExt struct{
+	Rewarded *int `json:"rewarded,omitempty" bson:"rewarded,omitempty"`
+}
+
+func (i *ImpressionsExt) copy() ImpressionsExt {
+	var rewarded *int
+	if i.Rewarded != nil {
+		rewarded = new(int)
+		*rewarded = *i.Rewarded
+	}
+	return ImpressionsExt{
+		Rewarded: rewarded,
+	}
 }
 
 func (imp *Impression) AssetCount() int {
@@ -195,10 +210,9 @@ func (imp *Impression) Copy() Impression {
 		copy(iframeBusters, imp.IFrameBusters)
 	}
 
-	var ext []byte
-	if len(imp.Ext) != 0 {
-		ext = make([]byte, len(imp.Ext))
-		copy(ext, imp.Ext)
+	var ext *ImpressionsExt
+	if imp.Ext != nil {
+		ext = pointer.Pointer(imp.Ext.copy())
 	}
 
 	return Impression{

@@ -94,3 +94,7 @@ func (d Decimal) DeepEqual(d2 Decimal) bool {
 func (d Decimal) Round() Decimal {
 	return Decimal{d.Decimal.Round(precision)}
 }
+
+func (d Decimal) RoundDP(places int32) Decimal {
+	return Decimal{d.Decimal.Round(places)}
+}

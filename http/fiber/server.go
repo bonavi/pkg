@@ -6,7 +6,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/gofiber/fiber/v2/middleware/healthcheck"
-	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -14,19 +13,8 @@ import (
 	"pkg/contextKeys"
 )
 
-type ServerSettingsEnv struct {
-	Port                    string        `env:"FIBER_SERVER_REST_PORT,required"`
-	ReadTimeout             time.Duration `env:"FIBER_SERVER_READ_TIMEOUT,required"`
-	WriteTimeout            time.Duration `env:"FIBER_SERVER_WRITE_TIMEOUT,required"`
-	IdleTimeout             time.Duration `env:"FIBER_SERVER_IDLE_TIMEOUT,required"`
-	EnableTrustedProxyCheck bool          `env:"FIBER_SERVER_TRUSTED_PROXY_CHECK,required"`
-	TrustedProxies          []string      `env:"FIBER_SERVER_TRUSTED_PROXIES,required"`
-	ProxyHeader             string        `env:"FIBER_SERVER_PROXY_HEADER,required"`
-}
-
 func GetDefaultServer(
 	appName string,
-	serverCfg ServerSettingsEnv,
 	readyIndicator chan struct{},
 ) (*fiber.App, error) {
 
@@ -43,20 +31,20 @@ func GetDefaultServer(
 		Views:                        nil,
 		ViewsLayout:                  "",
 		PassLocalsToViews:            false,
-		ReadTimeout:                  serverCfg.ReadTimeout,
-		WriteTimeout:                 serverCfg.WriteTimeout,
-		IdleTimeout:                  serverCfg.IdleTimeout,
+		ReadTimeout:                  15 * time.Second,
+		WriteTimeout:                 30 * time.Second,
+		IdleTimeout:                  60 * time.Second,
 		ReadBufferSize:               0,
 		WriteBufferSize:              0,
 		CompressedFileSuffix:         "",
-		ProxyHeader:                  serverCfg.ProxyHeader,
+		ProxyHeader:                  "X-Forwarded-For",
 		GETOnly:                      false,
 		ErrorHandler:                 nil,
 		DisableKeepalive:             false,
 		DisableDefaultDate:           false,
 		DisableDefaultContentType:    false,
 		DisableHeaderNormalizing:     false,
-		DisableStartupMessage:        false,
+		DisableStartupMessage:        true,
 		AppName:                      appName,
 		StreamRequestBody:            false,
 		DisablePreParseMultipartForm: false,
@@ -65,8 +53,8 @@ func GetDefaultServer(
 		JSONDecoder:                  nil,
 		XMLEncoder:                   nil,
 		Network:                      "",
-		EnableTrustedProxyCheck:      serverCfg.EnableTrustedProxyCheck,
-		TrustedProxies:               serverCfg.TrustedProxies,
+		EnableTrustedProxyCheck:      true,
+		TrustedProxies:               []string{"127.0.0.1"},
 		EnableIPValidation:           false,
 		EnablePrintRoutes:            false,
 		ColorScheme: fiber.Colors{
@@ -90,7 +78,6 @@ func GetDefaultServer(
 		Generator:  nil,
 		ContextKey: contextKeys.XRequestIDKey,
 	}))
-	app.Use(pprof.New())
 	app.Use(recover.New(recover.Config{
 		Next:              nil,
 		EnableStackTrace:  true,

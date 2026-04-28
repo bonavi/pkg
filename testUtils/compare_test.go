@@ -36,7 +36,7 @@ func Test_checkError(t *testing.T) {
 			name: "2. Одна из ошибок пустая, а другая нет (пришла ошибка, но не должна была)",
 			args: args{
 				wantErr:       nil,
-				gotErr:        errors.BadRequest.New(""),
+				gotErr:        errors.Default.New(""),
 				compareErrors: false,
 			},
 			wantErr:         errGotErrorIsNotEmpty,
@@ -45,7 +45,7 @@ func Test_checkError(t *testing.T) {
 		{
 			name: "3. Одна из ошибок пустая, а другая нет (не пришла ошибка, но должна была)",
 			args: args{
-				wantErr:       errors.BadRequest.New(""),
+				wantErr:       errors.Default.New(""),
 				gotErr:        nil,
 				compareErrors: false,
 			},
@@ -56,7 +56,7 @@ func Test_checkError(t *testing.T) {
 			name: "4. Пришедшая целевая ошибка не обернута",
 			args: args{
 				wantErr:       errors.New(""),
-				gotErr:        errors.BadRequest.New(""),
+				gotErr:        errors.Default.New(""),
 				compareErrors: false,
 			},
 			wantErr:         errWantErrorIsNotWrapped,
@@ -65,7 +65,7 @@ func Test_checkError(t *testing.T) {
 		{
 			name: "5. Пришедшая полученная ошибка не обернута",
 			args: args{
-				wantErr:       errors.BadRequest.New(""),
+				wantErr:       errors.Default.New(""),
 				gotErr:        errors.New(""),
 				compareErrors: false,
 			},
@@ -75,8 +75,8 @@ func Test_checkError(t *testing.T) {
 		{
 			name: "6. Соответствие кастомных типов ошибок",
 			args: args{
-				wantErr:       errors.BadRequest.New(""),
-				gotErr:        errors.BadRequest.New(""),
+				wantErr:       errors.Default.New(""),
+				gotErr:        errors.Default.New(""),
 				compareErrors: false,
 			},
 			wantErr:         nil,
@@ -85,8 +85,12 @@ func Test_checkError(t *testing.T) {
 		{
 			name: "7. Несоответствие кастомных типов ошибок",
 			args: args{
-				wantErr:       errors.BadRequest.New(""),
-				gotErr:        errors.InternalServer.New(""),
+				wantErr:       errors.Default.New(""),
+				gotErr:        errors.ErrorType{
+					HTTPCode:  500,
+					LogAs:     errors.LogAsError,
+					HumanText: "Test error type",
+				}.New(""),
 				compareErrors: false,
 			},
 			wantErr:         errCustomTypesMismatch,
@@ -95,8 +99,8 @@ func Test_checkError(t *testing.T) {
 		{
 			name: "8. Соответствие изначальных типов ошибок",
 			args: args{
-				wantErr:       errors.BadRequest.Wrap(firstType),
-				gotErr:        errors.BadRequest.Wrap(firstType),
+				wantErr:       errors.Default.Wrap(firstType),
+				gotErr:        errors.Default.Wrap(firstType),
 				compareErrors: true,
 			},
 			wantErr:         nil,
@@ -105,8 +109,8 @@ func Test_checkError(t *testing.T) {
 		{
 			name: "9. Несоответствие изначальных типов ошибок",
 			args: args{
-				wantErr:       errors.BadRequest.Wrap(firstType),
-				gotErr:        errors.BadRequest.Wrap(secondType),
+				wantErr:       errors.Default.Wrap(firstType),
+				gotErr:        errors.Default.Wrap(secondType),
 				compareErrors: true,
 			},
 			wantErr:         errWrappedTypesMismatch,

@@ -1,8 +1,7 @@
 package openrtb
 
 import (
-	"encoding/json"
-
+	"pkg/openrtb/stableID"
 	"pkg/pointer"
 )
 
@@ -45,7 +44,23 @@ type User struct {
 	Data []Data `json:"data,omitempty" bson:"data"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
-	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`
+	Ext *UserExt `json:"ext,omitempty" bson:"ext"`
+}
+
+type UserExt struct {
+	StableID *stableID.StableID `json:"stable_id,omitempty" bson:"stable_id"`
+}
+
+func (u *UserExt) copy() UserExt {
+
+	var stableID *stableID.StableID
+	if u.StableID != nil {
+		stableID = pointer.Pointer(u.StableID.Copy())
+	}
+
+	return UserExt{
+		StableID: stableID,
+	}
 }
 
 func (u *User) Copy() User {
@@ -63,10 +78,9 @@ func (u *User) Copy() User {
 		}
 	}
 
-	var ext []byte
-	if len(u.Ext) != 0 {
-		ext = make([]byte, len(u.Ext))
-		copy(ext, u.Ext)
+	var ext *UserExt
+	if u.Ext != nil {
+		ext = pointer.Pointer(u.Ext.copy())
 	}
 
 	return User{

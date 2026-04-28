@@ -2,33 +2,33 @@ package stackTrace
 
 import (
 	"fmt"
+	"math/rand"
 	"runtime"
 	"strings"
 	"sync/atomic"
 )
 
 type stackTracer struct {
-	serviceName string
-	isEnabled   atomic.Bool
+	serviceName  string
+	isEnabled    atomic.Bool
+	samplingRate int
 }
 
 var stackTracerInstance = &stackTracer{
-	serviceName: "",
-	isEnabled:   atomic.Bool{},
-}
-
-func init() {
-	stackTracerInstance.isEnabled.Store(true)
+	serviceName:  "",
+	isEnabled:    atomic.Bool{},
+	samplingRate: 1,
 }
 
 func SetIsEnabled(enabled bool) {
 	stackTracerInstance.isEnabled.Store(enabled)
 }
 
-func Init(serviceName string, isEnabled bool) {
+func Init(serviceName string, isEnabled bool, samplingRate int) {
 	stackTracerInstance = &stackTracer{
 		serviceName: serviceName,
 		isEnabled:   atomic.Bool{},
+		samplingRate: samplingRate,
 	}
 
 	stackTracerInstance.isEnabled.Store(isEnabled)
@@ -36,7 +36,11 @@ func Init(serviceName string, isEnabled bool) {
 
 func GetStackTrace(skip int) []string {
 
-	if !stackTracerInstance.isEnabled.Load() {
+	if !stackTracerInstance.isEnabled.Load() || stackTracerInstance.samplingRate < 1 {
+		return nil
+	}
+
+	if rand.Intn(stackTracerInstance.samplingRate) != 0 {
 		return nil
 	}
 

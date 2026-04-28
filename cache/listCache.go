@@ -41,7 +41,7 @@ func (c *ListCache[V]) Get() ([]V, bool) {
 	defer c.mu.RUnlock()
 
 	if time.Now().UnixNano() > c.expiration {
-		return []V{}, false
+		return c.items, false
 	}
 
 	return c.items, true

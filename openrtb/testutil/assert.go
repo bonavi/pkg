@@ -27,7 +27,7 @@ func printError(err error) string {
 	}
 
 	var builder strings.Builder
-	builder.Grow(64) //nolint:gomnd
+	builder.Grow(64)
 
 	writeError(&builder, err)
 
@@ -40,7 +40,7 @@ func printErrors(err error, indent string) string {
 	}
 
 	var builder strings.Builder
-	builder.Grow(128) //nolint:gomnd
+	builder.Grow(128)
 
 	writeError(&builder, err)
 
@@ -69,7 +69,7 @@ func EqualJSON(tb testing.TB, data []byte, expected interface{}) {
 		return
 	}
 
-	var actual interface{} = expected
+	var actual = expected
 
 	rt := reflect.TypeOf(actual).Elem()
 	actual = reflect.New(rt).Interface()

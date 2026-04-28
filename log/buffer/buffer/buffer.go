@@ -83,7 +83,7 @@ func (b *Buffer) Write(p []byte) (n int, err error) {
 // ReadByte возвращает байт из буфера под номером n.
 //
 // Паникует, если n меньше нуля или больше текущего размера буфера.
-func (b *Buffer) ReadByte(n int) byte { //nolint:govet
+func (b *Buffer) ReadByte(n int) byte {
 	if n < 0 || n > len(*b) {
 		panic("buffer: index out of range")
 	}

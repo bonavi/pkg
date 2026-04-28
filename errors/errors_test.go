@@ -11,12 +11,12 @@ func TestIs(t *testing.T) {
 	var (
 		err        = errors.New("err")
 		wrappedErr = fmt.Errorf("wrappedErr: %w", err)
-		customErr  = InternalServer.Wrap(err)
+		customErr  = Default.Wrap(err)
 	)
 
 	var (
 		anotherErr       = errors.New("err")
-		anotherCustomErr = InternalServer.Wrap(anotherErr)
+		anotherCustomErr = Default.Wrap(anotherErr)
 	)
 
 	var tests = []struct {

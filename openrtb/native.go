@@ -1,6 +1,6 @@
 package openrtb
 
-import "encoding/json"
+import "pkg/pointer"
 
 // Container for a native impression conforming to the Dynamic Native Ads API.
 type Native struct {
@@ -23,9 +23,14 @@ type Native struct {
 	BlockedAttrs []CreativeAttribute `json:"battr,omitempty" bson:"battr"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
-	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`
+	Ext *NativeExt `json:"ext,omitempty" bson:"ext"`
 }
 
+type NativeExt struct{}
+
+func (n *NativeExt) copy() NativeExt {
+	return NativeExt{}
+}
 func (n *Native) Copy() Native {
 
 	var apis []APIFramework
@@ -40,10 +45,9 @@ func (n *Native) Copy() Native {
 		copy(battrs, n.BlockedAttrs)
 	}
 
-	var ext []byte
-	if len(n.Ext) != 0 {
-		ext = make([]byte, len(n.Ext))
-		copy(ext, n.Ext)
+	var ext *NativeExt
+	if n.Ext != nil {
+		ext = pointer.Pointer(n.Ext.copy())
 	}
 
 	return Native{

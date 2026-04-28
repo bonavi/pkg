@@ -86,8 +86,4 @@ func PartContains(column string, value any) (string, any) {
 	return fmt.Sprintf("%s @> ?", column), value
 }
 
-func AllSubstring(value string) string {
-	return fmt.Sprintf("%%%s%%", value)
-}
-
 const SelectAll = "*"

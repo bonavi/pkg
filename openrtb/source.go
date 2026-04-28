@@ -1,6 +1,9 @@
 package openrtb
 
-import "encoding/json"
+import (
+	"pkg/openrtb/supplyChain"
+	"pkg/pointer"
+)
 
 // Request source details on post-auction decisioning (e.g., header bidding).
 type Source struct {
@@ -24,15 +27,29 @@ type Source struct {
 	PaymentChain string `json:"pchain,omitempty" bson:"pchain"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
-	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`
+	Ext *SourceExt `json:"ext,omitempty" bson:"ext"`
+}
+
+type SourceExt struct {
+	Schain *supplyChain.SupplyChain `json:"schain,omitempty" bson:"schain"`
+}
+
+func (s *SourceExt) copy() SourceExt {
+	var schain *supplyChain.SupplyChain
+	if s.Schain != nil {
+		schain = pointer.Pointer(s.Schain.Copy())
+	}
+
+	return SourceExt{
+		Schain: schain,
+	}
 }
 
 func (s *Source) Copy() Source {
 
-	var ext []byte
-	if len(s.Ext) != 0 {
-		ext = make([]byte, len(s.Ext))
-		copy(ext, s.Ext)
+	var ext *SourceExt
+	if s.Ext != nil {
+		ext = pointer.Pointer(s.Ext.copy())
 	}
 
 	return Source{

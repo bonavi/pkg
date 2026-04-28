@@ -35,9 +35,19 @@ func CreateTopics(conf KafkaSettingsEnv, reqs ...CreateTopicRequest) error {
 			ReplicaAssignment: nil,
 			ConfigEntries:     nil,
 		}
+		
 		err = adm.CreateTopic(req.Topic, &details, false)
 		if err != nil {
 			if errors.Is(err, sarama.ErrTopicAlreadyExists) {
+				// Пробуем увеличить партиции если нужно
+				err = adm.CreatePartitions(req.Topic, req.Partitions, nil, false)
+				if err != nil {
+					// Если партиций уже столько же или больше — не ошибка
+					if errors.Is(err, sarama.ErrInvalidPartitions) {
+						continue
+					}
+					return fmt.Errorf("migrate: alter partitions %q: %w", req.Topic, err)
+				}
 				continue
 			}
 			return fmt.Errorf("migrate: create topic %q: %w", req.Topic, err)

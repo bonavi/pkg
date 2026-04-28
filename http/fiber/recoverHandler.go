@@ -7,15 +7,14 @@ import (
 
 	"pkg/errors"
 	"pkg/log"
+	"pkg/middleware"
 )
 
-func RecoverHandler(c *fiber.Ctx, e any) {
+func RecoverHandler(c *fiber.Ctx, err any) {
 
-	err := errors.InternalServer.New(fmt.Sprintf("%v", e),
-		errors.SkipPreviousCallerOption(),
-	)
-
-	if err = DefaultErrorHandler(c, err); err != nil {
-		log.Error(c.Context(), err)
+	if err = middleware.DefaultErrorHandler(c, errors.Default.New(fmt.Sprintf("%v", err)).
+		SkipPreviousCaller(),
+	); err != nil {
+		log.Error(err)
 	}
 }

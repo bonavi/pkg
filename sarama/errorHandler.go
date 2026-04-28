@@ -9,7 +9,7 @@ import (
 	"pkg/log"
 )
 
-func ErrorHandler(producerKafka sarama.AsyncProducer, biddingStopper func() error) {
+func ErrorHandler(producerKafka sarama.AsyncProducer, biddingStopper func(error) error) {
 
 	// Слушаем канал ошибок от продюсера кафки
 	for err := range producerKafka.Errors() {
@@ -17,7 +17,7 @@ func ErrorHandler(producerKafka sarama.AsyncProducer, biddingStopper func() erro
 		if biddingStopper != nil {
 
 			// Вызываем функцию остановки аукциона
-			if biddingStopperErr := biddingStopper(); biddingStopperErr != nil {
+			if biddingStopperErr := biddingStopper(err); biddingStopperErr != nil {
 				log.Error(biddingStopperErr)
 			}
 		}
@@ -36,7 +36,7 @@ func ErrorHandler(producerKafka sarama.AsyncProducer, biddingStopper func() erro
 			}
 
 			// Логируем ошибку
-			log.Error(errors.InternalServer.Wrap(kafkaErr), log.ParamsOption(
+			log.Error(errors.Default.Wrap(kafkaErr).WithParams(
 				"topic", kafkaErr.Msg.Topic,
 				"key", string(key),
 				"value", string(value),
@@ -44,7 +44,7 @@ func ErrorHandler(producerKafka sarama.AsyncProducer, biddingStopper func() erro
 				"timestamp", kafkaErr.Msg.Timestamp.String(),
 			))
 		} else {
-			log.Error(errors.InternalServer.Wrap(err))
+			log.Error(errors.Default.Wrap(err))
 		}
 	}
 }

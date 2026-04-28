@@ -65,7 +65,28 @@ func (b *Builder) SetParam(kv ...string) *Builder {
 		if i+1 >= len(kv) {
 			break
 		}
+
+		if b.Params == nil {
+			b.Params = make(map[string]string, len(kv)/2)
+		}
+
 		b.Params[kv[i]] = kv[i+1]
+	}
+
+	return b
+}
+
+func (b *Builder) SetPathParam(kv ...string) *Builder {
+	for i := 0; i < len(kv); i += 2 {
+		if i+1 >= len(kv) {
+			break
+		}
+
+		if b.PathParams == nil {
+			b.PathParams = make(map[string]string, len(kv)/2)
+		}
+
+		b.PathParams[kv[i]] = kv[i+1]
 	}
 
 	return b
@@ -76,7 +97,7 @@ func (b *Builder) GetURL() (string, error) {
 	// Разбиваем хост на схему и хост
 	u, err := url.Parse(b.Host)
 	if err != nil {
-		return "", errors.InternalServer.Wrap(err)
+		return "", errors.Default.Wrap(err)
 	}
 
 	if b.Path != nil {
@@ -107,7 +128,7 @@ func (b *Builder) GetURL() (string, error) {
 		// Установка без экранирования
 		u.RawQuery, err = url.QueryUnescape(q.Encode())
 		if err != nil {
-			return "", errors.InternalServer.Wrap(err)
+			return "", errors.Default.Wrap(err)
 		}
 	} else {
 
@@ -116,15 +137,15 @@ func (b *Builder) GetURL() (string, error) {
 	}
 
 	if u.Host == "" {
-		return "", errors.InternalServer.New("Host is empty")
+		return "", errors.Default.New("Host is empty")
 	}
 
 	if u.Scheme == "" {
-		return "", errors.InternalServer.New("Scheme is empty")
+		return "", errors.Default.New("Scheme is empty")
 	}
 
 	if u.Path == "" {
-		return "", errors.InternalServer.New("Path is empty")
+		return "", errors.Default.New("Path is empty")
 	}
 
 	return u.String(), nil

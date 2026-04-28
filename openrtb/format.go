@@ -1,6 +1,6 @@
 package openrtb
 
-import "encoding/json"
+import "pkg/pointer"
 
 // An allowed size of a banner.
 type Format struct {
@@ -21,15 +21,19 @@ type Format struct {
 	WidthMin int `json:"wmin,omitempty" bson:"wmin"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
-	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`
+	Ext *FormatExt `json:"ext,omitempty" bson:"ext"`
 }
 
+type FormatExt struct{}
+
+func (d *FormatExt) copy() FormatExt {
+	return FormatExt{}
+}
 func (f *Format) Copy() Format {
 
-	var ext []byte
-	if len(f.Ext) != 0 {
-		ext = make([]byte, len(f.Ext))
-		copy(ext, f.Ext)
+	var ext *FormatExt
+	if f.Ext != nil {
+		ext = pointer.Pointer(f.Ext.copy())
 	}
 
 	return Format{

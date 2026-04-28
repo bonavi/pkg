@@ -57,3 +57,8 @@ func Revert[K comparable, V comparable](mapa map[K]V) (map[V]K, error) {
 
 	return revertMap, err
 }
+
+func KeyExists[K comparable, V any](mapa map[K]V, key K) bool {
+	_, exists := mapa[key]
+	return exists
+}

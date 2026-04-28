@@ -5,18 +5,18 @@ import (
 )
 
 type itemCacheItem[V any] struct {
-	Value V
+	Value      V
 }
 
 type ItemCache[K comparable, V any] struct {
-	mu    sync.RWMutex
-	items map[K]itemCacheItem[V]
+	mu         sync.RWMutex
+	items      map[K]itemCacheItem[V]
 }
 
 func NewItemCache[K comparable, V any]() *ItemCache[K, V] {
 	return &ItemCache[K, V]{
-		mu:    sync.RWMutex{},
-		items: make(map[K]itemCacheItem[V]),
+		mu:         sync.RWMutex{},
+		items:      make(map[K]itemCacheItem[V]),
 	}
 }
 
@@ -25,7 +25,7 @@ func (c *ItemCache[K, V]) Set(key K, value V) {
 	defer c.mu.Unlock()
 
 	c.items[key] = itemCacheItem[V]{
-		Value: value,
+		Value:      value,
 	}
 }
 
@@ -69,14 +69,14 @@ func (c *ItemCache[K, V]) ChangeOrCreate(key K, f func(V) V) {
 		var emptyType V
 
 		c.items[key] = itemCacheItem[V]{
-			Value: f(emptyType),
+			Value:      f(emptyType),
 		}
 
 	} else { // Если найдена
 
 		// Обновляем запись
 		c.items[key] = itemCacheItem[V]{
-			Value: f(item.Value),
+			Value:      f(item.Value),
 		}
 	}
 }

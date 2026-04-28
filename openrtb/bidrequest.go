@@ -123,7 +123,19 @@ type BidRequest struct {
 	Regulations *Regulations `json:"regs,omitempty" bson:"regs"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
-	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`
+	Ext *BidRequestExt `json:"ext,omitempty" bson:"ext"`
+}
+
+type BidRequestExt struct{
+	PretargetSetID int `json:"psid,omitempty" bson:"psid"`
+	RequestNumber int `json:"rn,omitempty" bson:"rn"`
+}
+
+func (b *BidRequestExt) copy() BidRequestExt {
+	return BidRequestExt{
+		PretargetSetID: b.PretargetSetID,
+		RequestNumber:  b.RequestNumber,
+	}
 }
 
 type jsonBidRequest BidRequest
@@ -241,10 +253,9 @@ func (r *BidRequest) Copy() BidRequest {
 		regs = pointer.Pointer(r.Regulations.Copy())
 	}
 
-	var ext []byte
-	if len(r.Ext) != 0 {
-		ext = make([]byte, len(r.Ext))
-		copy(ext, r.Ext)
+	var ext *BidRequestExt
+	if r.Ext != nil {
+		ext = pointer.Pointer(r.Ext.copy())
 	}
 
 	return BidRequest{

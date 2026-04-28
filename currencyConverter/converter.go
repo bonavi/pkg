@@ -18,7 +18,7 @@ func Convert(price decimal.Decimal, fromCurrency, toCurrency string, rates map[s
 	fromRate, ok1 := rates[fromCurrency]
 	toRate, ok2 := rates[toCurrency]
 	if !ok1 || !ok2 {
-		return decimal.Decimal{}, errors.InternalServer.New("Exchange rate for one of the currencies not found").WithParams(
+		return decimal.Decimal{}, errors.Default.New("Exchange rate for one of the currencies not found").WithParams(
 			"fromCurrency", fromCurrency,
 			"toCurrency", toCurrency,
 		).SkipThisCall()
@@ -43,7 +43,7 @@ func Coefficient(fromCurrency, toCurrency string, rates map[string]decimal.Decim
 	fromRate, ok1 := rates[fromCurrency]
 	toRate, ok2 := rates[toCurrency]
 	if !ok1 || !ok2 {
-		return decimal.Decimal{}, errors.InternalServer.New("Exchange rate for one of the currencies not found").WithParams(
+		return decimal.Decimal{}, errors.Default.New("Exchange rate for one of the currencies not found").WithParams(
 			"fromCurrency", fromCurrency,
 			"toCurrency", toCurrency,
 		).SkipThisCall()

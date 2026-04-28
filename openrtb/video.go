@@ -160,9 +160,9 @@ type Video struct {
 }
 
 type VideoExt struct {
-	Reward    int    `json:"reward,omitempty"`
-	Rewarded  int    `json:"rewarded,omitempty"`
-	VideoType string `json:"videotype,omitempty"` // Содержит rewarded для некоторых запросов. Нужно преобразовывать в "Rewarded: 1"
+	Reward    BoolInt `json:"reward,omitempty"`
+	Rewarded  BoolInt `json:"rewarded,omitempty"`
+	VideoType string  `json:"videotype,omitempty"` // Содержит rewarded для некоторых запросов. Нужно преобразовывать в "Rewarded: 1"
 }
 
 func (b *VideoExt) copy() VideoExt {

@@ -4,6 +4,7 @@ package vast
 import (
 	"encoding/xml"
 	"fmt"
+	"strings"
 )
 
 const (
@@ -161,8 +162,8 @@ type InLine struct {
 	// cross-domain issues are avoided.
 	Survey *Survey `xml:",omitempty" json:",omitempty"`
 	// The number of seconds in which the ad is valid for execution.
-	//In cases where the ad is requested ahead of time, this timing indicates how many seconds after the request that the ad expires and cannot be played.
-	//This element is useful for preventing an ad from playing after a timeout has occurred.
+	// In cases where the ad is requested ahead of time, this timing indicates how many seconds after the request that the ad expires and cannot be played.
+	// This element is useful for preventing an ad from playing after a timeout has occurred.
 	Expires *int `xml:"Expires,omitempty" json:"Expires,omitempty"`
 	// The ad server may provide URIs for tracking publisher-determined viewability,
 	// for both the InLine ad and any Wrappers, using the <ViewableImpression> element.
@@ -693,11 +694,17 @@ func (i *InLine) Validate() error {
 	if err := i.AdSystem.Validate(); err != nil {
 		return fmt.Errorf("invalid AdSystem: %w", err)
 	}
+	// AdTitle is optional - not critical for ad playback
+	// if strings.TrimSpace(i.AdTitle.CDATA) == "" {
+	// 	return fmt.Errorf("AdTitle is required")
+	// }
 	if len(i.Impressions) == 0 {
 		return fmt.Errorf("at least one Impression is required")
 	}
-	if i.AdTitle.CDATA == "" {
-		return fmt.Errorf("AdTitle is required")
+	for _, impression := range i.Impressions {
+		if strings.TrimSpace(impression.URI) == "" {
+			return fmt.Errorf("Impression URI is required")
+		}
 	}
 	if len(i.Creatives) == 0 {
 		return fmt.Errorf("at least one Creative is required")
@@ -723,10 +730,7 @@ func (w *Wrapper) Validate() error {
 	if err := w.AdSystem.Validate(); err != nil {
 		return fmt.Errorf("invalid AdSystem: %w", err)
 	}
-	if len(w.Impressions) == 0 {
-		return fmt.Errorf("at least one Impression is required")
-	}
-	if w.VASTAdTagURI.CDATA == "" {
+	if strings.TrimSpace(w.VASTAdTagURI.CDATA) == "" {
 		return fmt.Errorf("VASTAdTagURI is required")
 	}
 	return nil
@@ -787,13 +791,14 @@ func (m *MediaFile) Validate() error {
 	if m.Type == "" {
 		return fmt.Errorf("type is required")
 	}
-	if m.Width == 0 {
-		return fmt.Errorf("width is required")
-	}
-	if m.Height == 0 {
-		return fmt.Errorf("height is required")
-	}
-	if m.URI == "" {
+	// Width and Height can be 0 (flexible size) - valid per VAST spec
+	// if m.Width == 0 {
+	// 	return fmt.Errorf("width is required")
+	// }
+	// if m.Height == 0 {
+	// 	return fmt.Errorf("height is required")
+	// }
+	if strings.TrimSpace(m.URI) == "" {
 		return fmt.Errorf("URI is required")
 	}
 	return nil

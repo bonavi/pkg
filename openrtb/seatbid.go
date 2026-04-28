@@ -1,8 +1,8 @@
 package openrtb
 
 import (
-	"encoding/json"
 	"errors"
+	"pkg/pointer"
 )
 
 // Validation errors.
@@ -31,9 +31,14 @@ type SeatBid struct {
 	Group int `json:"group,omitempty" bson:"group"`
 
 	// Placeholder for bidder-specific extensions to OpenRTB.
-	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`
+	Ext *SeatBidExt `json:"ext,omitempty" bson:"ext"`
 }
 
+type SeatBidExt struct{}
+
+func (s *SeatBidExt) copy() SeatBidExt {
+	return SeatBidExt{}
+}
 func (sb *SeatBid) Copy() SeatBid {
 
 	var bids []Bid
@@ -44,10 +49,9 @@ func (sb *SeatBid) Copy() SeatBid {
 		}
 	}
 
-	var ext []byte
-	if len(sb.Ext) != 0 {
-		ext = make([]byte, len(sb.Ext))
-		copy(ext, sb.Ext)
+	var ext *SeatBidExt
+	if sb.Ext != nil {
+		ext = pointer.Pointer(sb.Ext.copy())
 	}
 
 	return SeatBid{

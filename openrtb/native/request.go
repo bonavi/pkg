@@ -91,7 +91,7 @@ type jsonNativeRequest NativeRequest
 
 // UnmarshalJSON custom unmarshaling.
 func (r *NativeRequest) UnmarshalJSON(data []byte) error {
-	j := jsonNativeRequest{Ver: "1.2", PlacementCount: 1} //nolint:exhaustruct
+	j := jsonNativeRequest{Ver: "1.2", PlacementCount: 1}
 	if err := json.Unmarshal(data, &j); err != nil {
 		return err
 	}

@@ -9,6 +9,22 @@ type SupplyChain struct {
 	Nodes []Node `json:"nodes"`
 }
 
+func (sc *SupplyChain) Copy() SupplyChain {
+	var nodes []Node
+	if len(sc.Nodes) != 0 {
+		nodes = make([]Node, len(sc.Nodes))
+		for i := range sc.Nodes {
+			nodes[i] = sc.Nodes[i].copy()
+		}
+	}
+
+	return SupplyChain{
+		Version:  sc.Version,
+		Complete: sc.Complete,
+		Nodes:    nodes,
+	}
+}
+
 type Node struct {
 	// Идентификатор источника (SSP, Exchange)
 	AccountSourceID string `json:"asi"`
@@ -20,4 +36,13 @@ type Node struct {
 	// 1 - означает, что узел участвует в потоке платежей и будет передавать деньги следующему узлу
 	// 0 - означает, что узел не участвует в финансовых операциях и не имеет получателя платежа
 	HasPayee int8 `json:"hp"`
+}
+
+func (n Node) copy() Node {
+	return Node{
+		AccountSourceID: n.AccountSourceID,
+		SellerID:        n.SellerID,
+		RequestID:       n.RequestID,
+		HasPayee:        n.HasPayee,
+	}
 }

@@ -263,7 +263,7 @@ func TestFirst(t *testing.T) {
 				array: []int{},
 			},
 			want:    0,
-			wantErr: errors.NotFound.New(""),
+			wantErr: errors.Default.New(""),
 		},
 		{
 			name: "2. Получение первого элемента из массива с одним элементом",
@@ -287,7 +287,7 @@ func TestFirst(t *testing.T) {
 				array: nil,
 			},
 			want:    0,
-			wantErr: errors.NotFound.New(""),
+			wantErr: errors.Default.New(""),
 		},
 	}
 	num1 := pointer.Pointer(1)
@@ -300,7 +300,7 @@ func TestFirst(t *testing.T) {
 				array: []*int{},
 			},
 			want:    nil,
-			wantErr: errors.NotFound.New(""),
+			wantErr: errors.Default.New(""),
 		},
 		{
 			name: "6. Получение первого элемента из массива с одним элементом (указатели)",
@@ -324,7 +324,7 @@ func TestFirst(t *testing.T) {
 				array: nil,
 			},
 			want:    nil,
-			wantErr: errors.NotFound.New(""),
+			wantErr: errors.Default.New(""),
 		},
 	}
 	for _, tt := range tests {
@@ -374,7 +374,7 @@ func TestFirstWithError(t *testing.T) {
 				initialErr: nil,
 			},
 			wantValue:          0,
-			wantErr:            errors.NotFound.New(""),
+			wantErr:            errors.Default.New(""),
 			compareErrorsTypes: false,
 		},
 		{
@@ -400,17 +400,17 @@ func TestFirstWithError(t *testing.T) {
 				initialErr: nil,
 			},
 			wantValue:          0,
-			wantErr:            errors.NotFound.New(""),
+			wantErr:            errors.Default.New(""),
 			compareErrorsTypes: false,
 		},
 		{
 			name: "5. Получение первого элемента из пустого массива с ошибкой",
 			args: args[int]{
 				array:      []int{},
-				initialErr: errors.InternalServer.Wrap(err),
+				initialErr: errors.Default.Wrap(err),
 			},
 			wantValue:          0,
-			wantErr:            errors.InternalServer.Wrap(err),
+			wantErr:            errors.Default.Wrap(err),
 			compareErrorsTypes: true,
 		},
 	}
@@ -422,7 +422,7 @@ func TestFirstWithError(t *testing.T) {
 				initialErr: nil,
 			},
 			wantValue:          nil,
-			wantErr:            errors.NotFound.New(""),
+			wantErr:            errors.Default.New(""),
 			compareErrorsTypes: false,
 		},
 		{
@@ -448,7 +448,7 @@ func TestFirstWithError(t *testing.T) {
 				array:      nil,
 				initialErr: nil,
 			},
-			wantErr:            errors.NotFound.New(""),
+			wantErr:            errors.Default.New(""),
 			compareErrorsTypes: false,
 		},
 		{
@@ -456,10 +456,10 @@ func TestFirstWithError(t *testing.T) {
 
 			args: args[*int]{
 				array:      []*int{},
-				initialErr: errors.InternalServer.Wrap(err),
+				initialErr: errors.Default.Wrap(err),
 			},
 			wantValue:          nil,
-			wantErr:            errors.InternalServer.Wrap(err),
+			wantErr:            errors.Default.Wrap(err),
 			compareErrorsTypes: true,
 		},
 	}

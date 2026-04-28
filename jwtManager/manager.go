@@ -1,8 +1,7 @@
 package jwtManager
 
 import (
-	"fmt"
-	"net/http"
+	"context"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -13,10 +12,7 @@ import (
 )
 
 var (
-	ErrTokenExpired = errors.ErrorType{
-		HTTPCode: 0,
-		LogAs:    0,
-	}.New("tokenExpired")
+	ErrTokenExpired = errors.New("tokenExpired")
 )
 
 type JWTManager struct {
@@ -42,18 +38,17 @@ func Init(
 
 type MyCustomClaims[T any] struct {
 	CustomClaims T
-	TokenType    TokenType
 	jwt.StandardClaims
 }
 
-type TokenType string
+type TokenType int
 
 const (
-	RefreshToken TokenType = "refresh"
-	AccessToken  TokenType = "access"
+	RefreshToken = iota + 1
+	AccessToken
 )
 
-func GenerateToken[T any](tokenType TokenType, customClaims T) (string, error) {
+func GenerateToken[T any](ctx context.Context, tokenType TokenType, customClaims T) (string, error) {
 
 	if jwtManager == nil {
 		return "", errors.Default.New("JWTManager is not initialized")
@@ -61,7 +56,6 @@ func GenerateToken[T any](tokenType TokenType, customClaims T) (string, error) {
 
 	claims := MyCustomClaims[T]{
 		CustomClaims: customClaims,
-		TokenType:    tokenType,
 		StandardClaims: jwt.StandardClaims{
 			Audience:  "",
 			ExpiresAt: time.Now().Add(jwtManager.ttls[tokenType]).Unix(),
@@ -83,7 +77,7 @@ func GenerateToken[T any](tokenType TokenType, customClaims T) (string, error) {
 	return tokenStr, nil
 }
 
-func ParseToken[T any](reqToken string, tokenType TokenType) (T, error) {
+func ParseToken[T any](ctx context.Context, reqToken string) (T, error) {
 
 	var typeZeroValue T
 
@@ -95,12 +89,12 @@ func ParseToken[T any](reqToken string, tokenType TokenType) (T, error) {
 
 	// Если токен пустой, возвращаем ошибку
 	if reqToken == "" {
-		return typeZeroValue, errors.ErrorType{HTTPCode: http.StatusUnauthorized}.New("JWT-token is empty").
+		return typeZeroValue, errors.Default.New("JWT-token is empty").
 			SkipThisCall()
 	}
 
 	// Парсим токен
-	token, jwtErr := jwt.ParseWithClaims(reqToken, &MyCustomClaims[T]{}, func(token *jwt.Token) (i any, err error) { //nolint:exhaustruct
+	token, jwtErr := jwt.ParseWithClaims(reqToken, &MyCustomClaims[T]{}, func(token *jwt.Token) (i any, err error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.Default.New("Unexpected signing method").
 				WithParams("token", token.Header["alg"]).
@@ -123,15 +117,15 @@ func ParseToken[T any](reqToken string, tokenType TokenType) (T, error) {
 			case validationError.Errors == jwt.ValidationErrorExpired:
 
 				// Если токен истек, определяем ошибку с errorf, чтобы потом вернуть
-				jwtErr = errors.ErrorType{HTTPCode: http.StatusUnauthorized}.Wrap(jwtErr).SkipThisCall().WithAdditionalError(ErrTokenExpired)
+				jwtErr = errors.Default.Wrap(jwtErr).SkipPreviousCaller().WithAdditionalError(ErrTokenExpired)
 
 			// Если другая ошибка, просто возвращаем ее
 			default:
-				return typeZeroValue, errors.ErrorType{HTTPCode: http.StatusUnauthorized}.Wrap(jwtErr).SkipThisCall()
+				return typeZeroValue, errors.Default.Wrap(jwtErr).SkipPreviousCaller()
 			}
 
 		} else { // Если ошибка не валидатора
-			return typeZeroValue, errors.Default.Wrap(jwtErr).SkipThisCall()
+			return typeZeroValue, errors.Default.Wrap(jwtErr).SkipPreviousCaller()
 		}
 	}
 
@@ -139,11 +133,6 @@ func ParseToken[T any](reqToken string, tokenType TokenType) (T, error) {
 	claims, ok := token.Claims.(*MyCustomClaims[T])
 	if !ok {
 		return typeZeroValue, errors.Default.New("Error get user claims from token")
-	}
-
-	if claims.TokenType != tokenType {
-		return claims.CustomClaims, errors.ErrorType{HTTPCode: http.StatusForbidden}.New(fmt.Sprintf("passed token is not %s token", tokenType)).
-			SkipThisCall()
 	}
 
 	// Обрабатываем ошибку парсера jwt

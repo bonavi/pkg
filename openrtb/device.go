@@ -1,8 +1,6 @@
 package openrtb
 
 import (
-	"encoding/json"
-
 	"pkg/pointer"
 )
 
@@ -123,7 +121,13 @@ type Device struct {
 	MacMD5 string `json:"macmd5,omitempty" bson:"macmd5"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
-	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`
+	Ext *DeviceExt `json:"ext,omitempty" bson:"ext"`
+}
+
+type DeviceExt struct{}
+
+func (d *DeviceExt) copy() DeviceExt {
+	return DeviceExt{}
 }
 
 func (d *Device) Copy() Device {
@@ -133,10 +137,9 @@ func (d *Device) Copy() Device {
 		geo = pointer.Pointer(d.Geo.Copy())
 	}
 
-	var ext []byte
-	if len(d.Ext) != 0 {
-		ext = make([]byte, len(d.Ext))
-		copy(ext, d.Ext)
+	var ext *DeviceExt
+	if d.Ext != nil {
+		ext = pointer.Pointer(d.Ext.copy())
 	}
 
 	return Device{

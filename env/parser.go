@@ -5,6 +5,7 @@ import (
 
 	"github.com/caarlos0/env/v11"
 
+	"pkg/errors"
 	"pkg/log"
 )
 
@@ -18,7 +19,7 @@ func Load[T any]() T {
 	if alreadyCalled.Load() {
 		conf, ok := instance.(*T)
 		if !ok {
-			log.Fatal("Config isn't type of T")
+			log.Fatal(errors.Default.New("Config isn't type of T"))
 		}
 		return *conf
 	}
@@ -41,12 +42,12 @@ func Load[T any]() T {
 		UseFieldNameByDefault: false,
 		FuncMap:               nil,
 	}); err != nil {
-		log.Fatal(err)
+		log.Fatal(errors.Default.Wrap(err).SkipPreviousCaller())
 	}
 
 	conf, ok := instance.(*T)
 	if !ok {
-		log.Fatal("Config isn't type of T")
+		log.Fatal(errors.Default.New("Config isn't type of T"))
 	}
 	return *conf
 }
@@ -58,7 +59,7 @@ func LoadForTest[T any]() T {
 	if alreadyCalled.Load() {
 		conf, ok := instance.(*T)
 		if !ok {
-			log.Fatal("Config isn't type of T")
+			log.Fatal(errors.Default.New("Config isn't type of T"))
 		}
 		return *conf
 	}
@@ -81,12 +82,12 @@ func LoadForTest[T any]() T {
 		UseFieldNameByDefault: false,
 		FuncMap:               nil,
 	}); err != nil {
-		log.Fatal(err)
+		log.Fatal(errors.Default.Wrap(err).SkipPreviousCaller())
 	}
 
 	conf, ok := instance.(*T)
 	if !ok {
-		log.Fatal("Config isn't type of T")
+		log.Fatal(errors.Default.New("Config isn't type of T"))
 	}
 	return *conf
 }

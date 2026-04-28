@@ -1,8 +1,8 @@
 package openrtb
 
 import (
-	"encoding/json"
 	"errors"
+	"pkg/pointer"
 )
 
 // Validation errors.
@@ -43,7 +43,17 @@ type BidResponse struct {
 	NBR NBR `json:"nbr,omitempty" bson:"nbr"`
 
 	// Placeholder for bidder-specific extensions to OpenRTB.
-	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`
+	Ext *BidResponseExt `json:"ext,omitempty" bson:"ext"`
+}
+
+func GetEmptyBidResponse() (res BidResponse) {
+	return res
+}
+
+type BidResponseExt struct{}
+
+func (r *BidResponseExt) copy() BidResponseExt {
+	return BidResponseExt{}
 }
 
 // Validate required attributes.
@@ -74,10 +84,9 @@ func (r *BidResponse) Copy() BidResponse {
 		}
 	}
 
-	var ext []byte
-	if len(r.Ext) != 0 {
-		ext = make([]byte, len(r.Ext))
-		copy(ext, r.Ext)
+	var ext *BidResponseExt
+	if r.Ext != nil {
+		ext = pointer.Pointer(r.Ext.copy())
 	}
 
 	return BidResponse{

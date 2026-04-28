@@ -1,26 +1,6 @@
 package ord
 
-import (
-	errors "pkg/errors"
-	"pkg/log"
-)
-
-var ValidationErr = errors.ErrorType{
-	HTTPCode: 400,
-	LogAs:    errors.LogAsWarning,
-}
-
-var (
-	ErrIDIsRequired               = ValidationErr.New("ID is required").wi
-	ErrAdoIDIsRequired            = ValidationErr.New("AdoID is required")
-	ErrUnifiedIDIsRequired        = ValidationErr.New("UnifiedID is required")
-	ErrTypeIsRequired             = ValidationErr.New("Type is required")
-	ErrNumberIsRequired           = ValidationErr.New("Number is required")
-	ErrSubjectTypeIsRequired      = ValidationErr.New("SubjectType is required")
-	ErrSignDateIsRequired         = ValidationErr.New("SignDate is required")
-	ErrAmountIsRequired           = ValidationErr.New("Amount is required")
-	ErrParentContractIDIsRequired = ValidationErr.New("ParentContractID is required for amendments")
-)
+import "pkg/errors"
 
 type ORDContract struct {
 
@@ -64,35 +44,35 @@ type ORDContract struct {
 func (o *ORDContract) Validate() error {
 
 	if o.ID == "" {
-		return errors.BadRequest.New("ID is required")
+		return errors.Default.New("ID is required")
 	}
 
 	if o.AdoID == "" {
-		return ErrAdoIDIsRequired.WithParams("field", "ado_id")
+		return errors.Default.New("AdoID is required")
 	}
 
 	if o.UnifiedID == nil {
-		return errors.BadRequest.New("UnifiedID is required")
+		return errors.Default.New("UnifiedID is required")
 	}
 
 	if o.Type == "" {
-		return errors.BadRequest.New("Type is required")
+		return errors.Default.New("Type is required")
 	}
 
 	if o.Number == "" {
-		return errors.BadRequest.New("Number is required")
+		return errors.Default.New("Number is required")
 	}
 
 	if o.SubjectType == "" {
-		return errors.BadRequest.New("SubjectType is required")
+		return errors.Default.New("SubjectType is required")
 	}
 
 	if o.SignDate == "" {
-		return errors.BadRequest.New("SignDate is required")
+		return errors.Default.New("SignDate is required")
 	}
 
 	if o.Amount == "" {
-		return errors.BadRequest.New("Amount is required")
+		return errors.Default.New("Amount is required")
 	}
 
 	return nil

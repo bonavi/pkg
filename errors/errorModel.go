@@ -3,6 +3,7 @@ package errors
 import "pkg/log/model"
 
 type ErrorType struct {
+	Name      string
 	HTTPCode  int
 	LogAs     LogOption
 	HumanText string

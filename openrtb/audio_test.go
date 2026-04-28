@@ -10,12 +10,12 @@ func TestAudio_Validate(t *testing.T) {
 	testcases := []Testcase{
 		{
 			Name:      "valid",
-			Validater: &openrtb.Audio{MIMEs: []string{"mime"}}, //nolint:exhaustruct
+			Validater: &openrtb.Audio{MIMEs: []string{"mime"}},
 			Err:       nil,
 		},
 		{
 			Name:      "no valid",
-			Validater: &openrtb.Audio{}, //nolint:exhaustruct
+			Validater: &openrtb.Audio{},
 			Err:       openrtb.ErrInvalidAudioNoMIMEs,
 		},
 	}

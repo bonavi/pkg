@@ -7,13 +7,13 @@ import (
 
 func IgnoreErrorWithArgument[T any](v T, err error) T {
 	if err != nil {
-		log.Fatal(errors.InternalServer.Wrap(err).SkipThisCall())
+		log.Fatal(errors.Default.Wrap(err).SkipThisCall())
 	}
 	return v
 }
 
 func IgnoreError(err error) {
 	if err != nil {
-		log.Fatal(errors.InternalServer.Wrap(err).SkipThisCall())
+		log.Fatal(errors.Default.Wrap(err).SkipThisCall())
 	}
 }

@@ -53,7 +53,7 @@ func TestCreateNewPassword(t *testing.T) {
 
 		// Генерируем новый пароль
 		_, gotErr := CreateNewPassword(userPassword, generalSalt, generalUserSalt)
-		testUtils.CheckError(t, errors.BadRequest.New(""), gotErr, false)
+		testUtils.CheckError(t, errors.Default.New(""), gotErr, false)
 	})
 }
 

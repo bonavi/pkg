@@ -1,6 +1,6 @@
 package openrtb
 
-import "encoding/json"
+import "pkg/pointer"
 
 // ThirdParty abstract attributes.
 type ThirdParty struct {
@@ -18,7 +18,13 @@ type ThirdParty struct {
 	Domain string `json:"domain,omitempty" bson:"domain"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
-	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`
+	Ext *ThirdPartyExt `json:"ext,omitempty" bson:"ext"`
+}
+
+type ThirdPartyExt struct{}
+
+func (t *ThirdPartyExt) copy() ThirdPartyExt {
+	return ThirdPartyExt{}
 }
 
 func (t *ThirdParty) Copy() ThirdParty {
@@ -29,10 +35,9 @@ func (t *ThirdParty) Copy() ThirdParty {
 		copy(categories, t.Categories)
 	}
 
-	var ext []byte
-	if len(t.Ext) != 0 {
-		ext = make([]byte, len(t.Ext))
-		copy(ext, t.Ext)
+	var ext *ThirdPartyExt
+	if t.Ext != nil {
+		ext = pointer.Pointer(t.Ext.copy())
 	}
 
 	return ThirdParty{

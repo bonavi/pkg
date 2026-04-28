@@ -92,6 +92,23 @@ func CastError(err error) Error {
 
 // As используется для вызова стандартной функции As
 func As(get error, target any) bool {
+
+	if get == nil {
+		return false
+	}
+
+	// Если мы приводим ошибку к нашей внутренней ошибке
+	if _, ok := target.(*Error); ok {
+		return errors.As(get, target)
+	}
+
+	// Если пришла наша ошибка, парсим ее и вызываем стандартную функцию As к Err полю
+	var customErr Error
+	if errors.As(get, &customErr) {
+		return errors.As(customErr.Err, target)
+	}
+
+	// Если это не наша ошибка, то вызываем стандартную функцию As
 	return errors.As(get, target)
 }
 
@@ -125,6 +142,14 @@ func Is(err error, target error) bool {
 			return errors.Is(err, target) // default - default
 		}
 	}
+}
+
+func IsDefault(err error) bool {
+	var customErr Error
+	if As(err, &customErr) {
+		return customErr.ErrorType == Default
+	}
+	return true
 }
 
 func IsContextError(err error) bool {
