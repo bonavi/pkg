@@ -6,6 +6,7 @@ import (
 	"os"
 	"pkg/errors"
 	"sync/atomic"
+	"time"
 
 	"pkg/log/buffer/buffer"
 	"pkg/maps"
@@ -105,6 +106,9 @@ func (h *ConsoleHandler) handle(log Log) {
 
 	state.buf.WriteString(log.level.ToUpper())
 	state.buf.WriteString(colorReset)
+	state.buf.WriteByte(delimer)
+
+	state.buf.WriteString(time.Now().Format("15:04:05.000"))
 	state.buf.WriteByte(delimer)
 
 	state.buf.WriteString(logStruct.Path)
