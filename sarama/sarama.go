@@ -4,24 +4,58 @@ import (
 	"encoding/json"
 	"time"
 
+	"google.golang.org/protobuf/proto"
+
 	"github.com/Shopify/sarama"
 
 	"pkg/errors"
 )
 
-func ConvertStructToMessage(message any, topic string) (*sarama.ProducerMessage, error) {
+func ConvertStructToMessageJSON(key *string, message any, topic string) (*sarama.ProducerMessage, error) {
 
 	bytes, err := json.Marshal(message)
 	if err != nil {
-		return nil, errors.InternalServer.Wrap(err)
+		return nil, errors.Default.Wrap(err)
 	}
 
 	value := make(sarama.ByteEncoder, len(bytes))
 	copy(value, bytes)
 
+	var saramaKey sarama.Encoder
+	if key != nil {
+		saramaKey = sarama.StringEncoder(*key)
+	}
+
 	return &sarama.ProducerMessage{
 		Topic:     topic,
-		Key:       nil,
+		Key:       saramaKey,
+		Value:     value,
+		Headers:   nil,
+		Metadata:  nil,
+		Offset:    0,
+		Partition: 0,
+		Timestamp: time.Now(),
+	}, nil
+}
+
+func ConvertStructToMessagePb(key *string, message proto.Message, topic string) (*sarama.ProducerMessage, error) {
+
+	bytes, err := proto.Marshal(message)
+	if err != nil {
+		return nil, errors.Default.Wrap(err)
+	}
+
+	value := make(sarama.ByteEncoder, len(bytes))
+	copy(value, bytes)
+
+	var saramaKey sarama.Encoder
+	if key != nil {
+		saramaKey = sarama.StringEncoder(*key)
+	}
+
+	return &sarama.ProducerMessage{
+		Topic:     topic,
+		Key:       saramaKey,
 		Value:     value,
 		Headers:   nil,
 		Metadata:  nil,

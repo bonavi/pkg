@@ -4,16 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	_ "github.com/jackc/pgx/v5/stdlib" //nolint:golint
+	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"pkg/sql"
 )
 
 type PgsqlConfigEnv struct {
 	Host     string `env:"PGSQL_HOST"`
-	Database string `env:"PGSQL_DATABASE"`
 	User     string `env:"PGSQL_USER"`
 	Password string `env:"PGSQL_PASSWORD"`
+	Database string `env:"PGSQL_DATABASE"`
 }
 
 func NewClientPgsql(ctx context.Context, conf PgsqlConfigEnv) (*sql.DB, error) {
@@ -39,6 +39,6 @@ func NewClientPgsql(ctx context.Context, conf PgsqlConfigEnv) (*sql.DB, error) {
 	return db.Unsafe(), nil
 }
 
-func (p PgsqlConfigEnv) GetConnectionURI() string {
-	return fmt.Sprintf("postgres://%v:%v@%v/%v", p.User, p.Password, p.Host, p.Database)
+func (c *PgsqlConfigEnv) GetConnectionURI() string {
+	return fmt.Sprintf("postgres://%v:%v@%v/%v", c.User, c.Password, c.Host, c.Database)
 }

@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
-	"pkg/errors"
 
+	"pkg/errors"
 	"pkg/log"
 
 	"github.com/pressly/goose/v3"

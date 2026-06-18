@@ -88,7 +88,7 @@ type jsonNativeResponse NativeResponse
 
 // UnmarshalJSON custom unmarshaling.
 func (r *NativeResponse) UnmarshalJSON(data []byte) error {
-	j := jsonNativeResponse{Ver: "1.2"} //nolint:exhaustruct
+	j := jsonNativeResponse{Ver: "1.2"}
 	if err := json.Unmarshal(data, &j); err != nil {
 		return err
 	}

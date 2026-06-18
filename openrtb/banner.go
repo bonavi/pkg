@@ -1,6 +1,6 @@
 package openrtb
 
-import "encoding/json"
+import "pkg/pointer"
 
 // Details for a banner impression (incl. in-banner video) or video companion ad.
 type Banner struct {
@@ -78,7 +78,13 @@ type Banner struct {
 	VCM int `json:"vcm,omitempty" bson:"vcm"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
-	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`
+	Ext *BannerExt `json:"ext,omitempty" bson:"ext"`
+}
+
+type BannerExt struct{}
+
+func (b *BannerExt) copy() BannerExt {
+	return BannerExt{}
 }
 
 func (b *Banner) Copy() Banner {
@@ -121,10 +127,9 @@ func (b *Banner) Copy() Banner {
 		copy(apis, b.APIs)
 	}
 
-	var ext []byte
-	if len(b.Ext) != 0 {
-		ext = make([]byte, len(b.Ext))
-		copy(ext, b.Ext)
+	var ext *BannerExt
+	if b.Ext != nil {
+		ext = pointer.Pointer(b.Ext.copy())
 	}
 
 	return Banner{

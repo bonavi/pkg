@@ -13,7 +13,7 @@
                         "bidfloor": 5.3,
                         "at": 1,
                         "wseats": [],
-                        "ext": {"priority":1,"wadvs":[]}
+                        "ext": {}
                     }
                 ]
             },

@@ -707,8 +707,8 @@ func TestWrapperLinear(t *testing.T) {
 				assert.Equal(t, "http://myTrackingURL/wrapper/impression", wrapper.Impressions[0].URI)
 			}
 
-			if assert.Len(t, wrapper.Creatives, 3) {
-				crea1 := wrapper.Creatives[0]
+			if assert.NotNil(t, wrapper.Creatives) && assert.Len(t, *wrapper.Creatives, 3) {
+				crea1 := (*wrapper.Creatives)[0]
 				assert.Equal(t, "602833", crea1.AdID)
 				assert.Nil(t, crea1.NonLinearAds)
 				assert.Nil(t, crea1.CompanionAds)
@@ -723,7 +723,7 @@ func TestWrapperLinear(t *testing.T) {
 					assert.Nil(t, linear.VideoClicks)
 				}
 
-				crea2 := wrapper.Creatives[1]
+				crea2 := (*wrapper.Creatives)[1]
 				assert.Equal(t, "", crea2.AdID)
 				assert.Nil(t, crea2.CompanionAds)
 				assert.Nil(t, crea2.NonLinearAds)
@@ -733,7 +733,7 @@ func TestWrapperLinear(t *testing.T) {
 					}
 				}
 
-				crea3 := wrapper.Creatives[2]
+				crea3 := (*wrapper.Creatives)[2]
 				assert.Equal(t, "602833-NonLinearTracking", crea3.AdID)
 				assert.Nil(t, crea3.CompanionAds)
 				assert.Nil(t, crea3.Linear)
@@ -771,14 +771,14 @@ func TestWrapperNonLinear(t *testing.T) {
 				assert.Equal(t, "http://myTrackingURL/wrapper/impression", wrapper.Impressions[0].URI)
 			}
 
-			if assert.Len(t, wrapper.Creatives, 2) {
-				crea1 := wrapper.Creatives[0]
+			if assert.NotNil(t, wrapper.Creatives) && assert.Len(t, *wrapper.Creatives, 2) {
+				crea1 := (*wrapper.Creatives)[0]
 				assert.Equal(t, "602867", crea1.AdID)
 				assert.Nil(t, crea1.NonLinearAds)
 				assert.Nil(t, crea1.CompanionAds)
 				assert.NotNil(t, crea1.Linear)
 
-				crea2 := wrapper.Creatives[1]
+				crea2 := (*wrapper.Creatives)[1]
 				assert.Equal(t, "602867-NonLinearTracking", crea2.AdID)
 				assert.Nil(t, crea2.CompanionAds)
 				assert.Nil(t, crea2.Linear)

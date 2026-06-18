@@ -1,7 +1,6 @@
 package openrtb_test
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/shopspring/decimal"
@@ -143,7 +142,7 @@ func TestBidRequest_Unmarshal(t *testing.T) {
 									BidFloor:         5.3,
 									BidFloorCurrency: "USD",
 									AuctionType:      1,
-									Ext:              json.RawMessage([]byte(`{"priority":1,"wadvs":[]}`)),
+									Ext:              &openrtb.DealExt{},
 								},
 							},
 						},
@@ -262,7 +261,7 @@ func TestBidRequest_Unmarshal(t *testing.T) {
 									BidFloor:         5.3,
 									BidFloorCurrency: "USD",
 									AuctionType:      1,
-									Ext:              json.RawMessage([]byte(`{"priority":1,"wadvs":[]}`)),
+									Ext:              &openrtb.DealExt{},
 								},
 							},
 						},

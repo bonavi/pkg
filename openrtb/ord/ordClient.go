@@ -32,15 +32,15 @@ type ORDClient struct {
 func (o *ORDClient) Validate() error {
 
 	if o.INN == "" {
-		return errors.BadRequest.New("INN is required")
+		return errors.Default.New("INN is required")
 	}
 
 	if o.Name == "" {
-		return errors.BadRequest.New("Name is required")
+		return errors.Default.New("Name is required")
 	}
 
 	if o.LegalForm == "" {
-		return errors.BadRequest.New("LegalForm is required")
+		return errors.Default.New("LegalForm is required")
 	}
 
 	return nil

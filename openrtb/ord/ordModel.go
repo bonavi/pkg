@@ -41,7 +41,7 @@ type Nroa struct {
 	// Заполняется только если initial_contract имеет тип “дополнительное соглашение”
 	//
 	// Содержит информацию о договоре (или договорах, если это цепочка), по отношению к которому initial_contract является ДС.
-	ParentContracts []ORDContract `json:"parent_contracts"`
+	ParentContracts []ORDContract `json:"parent_contracts,omitempty"`
 }
 
 func (n *Nroa) Copy() Nroa {
@@ -83,11 +83,11 @@ func (n *Nroa) Copy() Nroa {
 func (n *Nroa) Validate() error {
 
 	if n.Erid == "" {
-		return errors.BadRequest.New("Erid is required")
+		return errors.Default.New("Erid is required")
 	}
 
 	if n.Contractor == nil {
-		return errors.BadRequest.New("Contractor is required")
+		return errors.Default.New("Contractor is required")
 	}
 
 	if err := n.Contractor.Validate(); err != nil {
@@ -95,7 +95,7 @@ func (n *Nroa) Validate() error {
 	}
 
 	if n.Client == nil {
-		return errors.BadRequest.New("Client is required")
+		return errors.Default.New("Client is required")
 	}
 
 	if err := n.Client.Validate(); err != nil {
@@ -103,7 +103,7 @@ func (n *Nroa) Validate() error {
 	}
 
 	if n.InitialContract == nil {
-		return errors.BadRequest.New("InitialContract is required")
+		return errors.Default.New("InitialContract is required")
 	}
 
 	if err := n.InitialContract.Validate(); err != nil {

@@ -27,21 +27,21 @@ func TestCheckPointerToStruct(t *testing.T) {
 			args: args{
 				dest: new(string),
 			},
-			wantErr: errors.InternalServer.New(""),
+			wantErr: errors.Default.New(""),
 		},
 		{
 			name: "3. Передача в функцию указателя на число",
 			args: args{
 				dest: new(int),
 			},
-			wantErr: errors.InternalServer.New(""),
+			wantErr: errors.Default.New(""),
 		},
 		{
 			name: "4. Передача в функцию копии структуры",
 			args: args{
 				dest: struct{}{},
 			},
-			wantErr: errors.InternalServer.New(""),
+			wantErr: errors.Default.New(""),
 		},
 	}
 	for _, tt := range tests {

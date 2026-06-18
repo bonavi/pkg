@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -27,17 +28,17 @@ func NewClientRedis(cfg RedisConfigEnv, database int) (*redis.Client, error) {
 		CredentialsProvider:        nil,
 		CredentialsProviderContext: nil,
 		DB:                         database,
-		MaxRetries:                 0,
+		MaxRetries:                 3,
 		MinRetryBackoff:            0,
 		MaxRetryBackoff:            0,
-		DialTimeout:                0,
-		ReadTimeout:                0,
-		WriteTimeout:               0,
+		DialTimeout:                5 * time.Second,
+		ReadTimeout:                5 * time.Second,
+		WriteTimeout:               5 * time.Second,
 		ContextTimeoutEnabled:      false,
 		PoolFIFO:                   false,
-		PoolSize:                   0,
-		PoolTimeout:                0,
-		MinIdleConns:               0,
+		PoolSize:                   100,
+		PoolTimeout:                10 * time.Second,
+		MinIdleConns:               10,
 		MaxIdleConns:               0,
 		MaxActiveConns:             0,
 		ConnMaxIdleTime:            0,

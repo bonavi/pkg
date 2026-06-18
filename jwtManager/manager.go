@@ -1,8 +1,7 @@
 package jwtManager
 
 import (
-	"fmt"
-	"net/http"
+	"context"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -13,10 +12,7 @@ import (
 )
 
 var (
-	ErrTokenExpired = errors.ErrorType{
-		HTTPCode: 0,
-		LogAs:    0,
-	}.New("tokenExpired")
+	ErrTokenExpired = errors.New("tokenExpired")
 )
 
 type JWTManager struct {
@@ -46,14 +42,14 @@ type MyCustomClaims[T any] struct {
 	jwt.StandardClaims
 }
 
-type TokenType string
+type TokenType int
 
 const (
-	RefreshToken TokenType = "refresh"
-	AccessToken  TokenType = "access"
+	RefreshToken = iota + 1
+	AccessToken
 )
 
-func GenerateToken[T any](tokenType TokenType, customClaims T) (string, error) {
+func GenerateToken[T any](ctx context.Context, tokenType TokenType, customClaims T) (string, error) {
 
 	if jwtManager == nil {
 		return "", errors.Default.New("JWTManager is not initialized")
@@ -77,34 +73,34 @@ func GenerateToken[T any](tokenType TokenType, customClaims T) (string, error) {
 
 	tokenStr, err := token.SignedString(jwtManager.accessTokenSigningKey)
 	if err != nil {
-		return "", errors.Default.Wrap(err)
+		return "", errors.Default.Wrap(err).WithContextParams(ctx)
 	}
 
 	return tokenStr, nil
 }
 
-func ParseToken[T any](reqToken string, tokenType TokenType) (T, error) {
+func ParseToken[T any](ctx context.Context, reqToken string, tokenType TokenType) (T, error) {
 
 	var typeZeroValue T
 
 	// Если менеджер не инициализирован, возвращаем ошибку
 	if jwtManager == nil {
 		return typeZeroValue, errors.Default.New("JWTManager is not initialized").
-			SkipThisCall()
+			SkipThisCall().WithContextParams(ctx)
 	}
 
 	// Если токен пустой, возвращаем ошибку
 	if reqToken == "" {
-		return typeZeroValue, errors.ErrorType{HTTPCode: http.StatusUnauthorized}.New("JWT-token is empty").
-			SkipThisCall()
+		return typeZeroValue, errors.Default.New("JWT-token is empty").
+			SkipThisCall().WithContextParams(ctx)
 	}
 
 	// Парсим токен
-	token, jwtErr := jwt.ParseWithClaims(reqToken, &MyCustomClaims[T]{}, func(token *jwt.Token) (i any, err error) { //nolint:exhaustruct
+	token, jwtErr := jwt.ParseWithClaims(reqToken, &MyCustomClaims[T]{}, func(token *jwt.Token) (i any, err error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.Default.New("Unexpected signing method").
 				WithParams("token", token.Header["alg"]).
-				SkipThisCall()
+				SkipThisCall().WithContextParams(ctx)
 		}
 
 		return jwtManager.accessTokenSigningKey, nil
@@ -123,32 +119,31 @@ func ParseToken[T any](reqToken string, tokenType TokenType) (T, error) {
 			case validationError.Errors == jwt.ValidationErrorExpired:
 
 				// Если токен истек, определяем ошибку с errorf, чтобы потом вернуть
-				jwtErr = errors.ErrorType{HTTPCode: http.StatusUnauthorized}.Wrap(jwtErr).SkipThisCall().WithAdditionalError(ErrTokenExpired)
+				jwtErr = errors.Default.Wrap(jwtErr).SkipPreviousCaller().WithAdditionalError(ErrTokenExpired).WithContextParams(ctx)
 
 			// Если другая ошибка, просто возвращаем ее
 			default:
-				return typeZeroValue, errors.ErrorType{HTTPCode: http.StatusUnauthorized}.Wrap(jwtErr).SkipThisCall()
+				return typeZeroValue, errors.Default.Wrap(jwtErr).SkipPreviousCaller().WithContextParams(ctx)
 			}
 
 		} else { // Если ошибка не валидатора
-			return typeZeroValue, errors.Default.Wrap(jwtErr).SkipThisCall()
+			return typeZeroValue, errors.Default.Wrap(jwtErr).SkipPreviousCaller().WithContextParams(ctx)
 		}
 	}
 
 	// Если ошибок нет, пробуем получить кастомные клеймы
 	claims, ok := token.Claims.(*MyCustomClaims[T])
 	if !ok {
-		return typeZeroValue, errors.Default.New("Error get user claims from token")
-	}
-
-	if claims.TokenType != tokenType {
-		return claims.CustomClaims, errors.ErrorType{HTTPCode: http.StatusForbidden}.New(fmt.Sprintf("passed token is not %s token", tokenType)).
-			SkipThisCall()
+		return typeZeroValue, errors.Default.New("Error get user claims from token").WithContextParams(ctx)
 	}
 
 	// Обрабатываем ошибку парсера jwt
 	if jwtErr != nil {
 		return claims.CustomClaims, jwtErr
+	}
+
+	if claims.TokenType != tokenType {
+		return typeZeroValue, errors.Default.New("Token types do not match").WithContextParams(ctx).WithParams("tokenType", tokenType)
 	}
 
 	return claims.CustomClaims, nil

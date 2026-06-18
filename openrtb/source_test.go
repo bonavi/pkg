@@ -1,7 +1,6 @@
 package openrtb_test
 
 import (
-	"encoding/json"
 	"testing"
 
 	"pkg/openrtb"
@@ -12,7 +11,7 @@ func TestSource_Unmarshal(t *testing.T) {
 		FinalSaleDecision: 1,
 		TransactionID:     "transaction-id",
 		PaymentChain:      "payment-chain",
-		Ext:               json.RawMessage([]byte("{}")),
+		Ext:               &openrtb.SourceExt{},
 	}
 
 	assertEqualJSON(t, "source", &expected)

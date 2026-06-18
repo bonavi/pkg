@@ -1,8 +1,6 @@
 package sql
 
 import (
-	"context"
-
 	"github.com/jmoiron/sqlx"
 )
 
@@ -17,14 +15,14 @@ type Row struct {
 
 func (s *Row) Scan(dest ...any) error {
 	if err := s.Row.Scan(dest...); err != nil {
-		return wrapSQLError(context.Background(), err)
+		return wrapSQLError(err)
 	}
 	return nil
 }
 
 func (s *Row) StructScan(dest any) error {
 	if err := s.Row.StructScan(dest); err != nil {
-		return wrapSQLError(context.Background(), err)
+		return wrapSQLError(err)
 	}
 	return nil
 }
@@ -32,7 +30,7 @@ func (s *Row) StructScan(dest any) error {
 func (s *Row) SliceScan() ([]any, error) {
 	res, err := s.Row.SliceScan()
 	if err != nil {
-		return nil, wrapSQLError(context.Background(), err)
+		return nil, wrapSQLError(err)
 	}
 	return res, nil
 
@@ -40,7 +38,7 @@ func (s *Row) SliceScan() ([]any, error) {
 
 func (s *Row) MapScan(dest map[string]any) error {
 	if err := s.Row.MapScan(dest); err != nil {
-		return wrapSQLError(context.Background(), err)
+		return wrapSQLError(err)
 	}
 	return nil
 }

@@ -1,6 +1,8 @@
 package openrtb
 
-import "encoding/json"
+import (
+	"pkg/pointer"
+)
 
 // Collection of additional user targeting data from a specific data source.
 type Data struct {
@@ -14,7 +16,13 @@ type Data struct {
 	Segment []Segment `json:"segment,omitempty" db:"segment"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB
-	Ext json.RawMessage `json:"ext,omitempty" db:"ext"`
+	Ext *DataExt `json:"ext,omitempty" db:"ext"`
+}
+
+type DataExt struct{}
+
+func (d *DataExt) copy() DataExt {
+	return DataExt{}
 }
 
 func (d *Data) Copy() Data {
@@ -27,10 +35,9 @@ func (d *Data) Copy() Data {
 		}
 	}
 
-	var ext []byte
-	if len(d.Ext) != 0 {
-		ext = make([]byte, len(d.Ext))
-		copy(ext, d.Ext)
+	var ext *DataExt
+	if d.Ext != nil {
+		ext = pointer.Pointer(d.Ext.copy())
 	}
 
 	return Data{
@@ -53,15 +60,20 @@ type Segment struct {
 	Value string `json:"value,omitempty" db:"value"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
-	Ext json.RawMessage `json:"ext,omitempty" db:"ext"`
+	Ext *SegmentExt `json:"ext,omitempty" db:"ext"`
+}
+
+type SegmentExt struct{}
+
+func (d *SegmentExt) copy() SegmentExt {
+	return SegmentExt{}
 }
 
 func (s *Segment) Copy() Segment {
 
-	var ext []byte
-	if len(s.Ext) != 0 {
-		ext = make([]byte, len(s.Ext))
-		copy(ext, s.Ext)
+	var ext *SegmentExt
+	if s.Ext != nil {
+		ext = pointer.Pointer(s.Ext.copy())
 	}
 
 	return Segment{

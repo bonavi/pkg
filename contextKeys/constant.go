@@ -2,24 +2,20 @@ package contextKeys
 
 import (
 	"context"
+
+	"pkg/errors"
 )
 
 type ContextKey int
 
 const (
-	DeviceIDKey ContextKey = iota + 1
-	UserIDKey
-	TaskIDKey
-	XRequestIDKey
+	XRequestIDKey ContextKey = iota + 1
 )
 
-func SetRequestID(ctx context.Context, taskID string) context.Context {
-	return context.WithValue(ctx, TaskIDKey, taskID)
-}
-
-func GetRequestID(ctx context.Context) *string {
-	if v, ok := ctx.Value(TaskIDKey).(string); ok {
-		return &v
+func GetXRequestID(ctx context.Context) (string, error) {
+	xRequestID, ok := ctx.Value(XRequestIDKey).(string)
+	if !ok {
+		return "", errors.Default.New("XRequestID was not found").SkipThisCall()
 	}
-	return nil
+	return xRequestID, nil
 }

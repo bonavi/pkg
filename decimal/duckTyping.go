@@ -2,12 +2,13 @@ package decimal
 
 import (
 	"database/sql/driver"
-	"pkg/errors"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/x/bsonx/bsoncore"
+
+	"pkg/errors"
 )
 
 func (d Decimal) MarshalBSONValue() (bsontype.Type, []byte, error) {

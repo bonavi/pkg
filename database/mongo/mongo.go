@@ -4,10 +4,11 @@ import (
 	"context"
 	"sync"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
+
+	"github.com/prometheus/client_golang/prometheus"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -96,7 +97,7 @@ func NewClientMongo(conf SettingsMongoConfig, namespace string) (*mongo.Database
 	}
 
 	if err = client.Ping(ctx, nil); err != nil {
-		return nil, errors.InternalServer.Wrap(err)
+		return nil, errors.Default.Wrap(err)
 	}
 
 	db := client.Database(conf.Database)
@@ -163,15 +164,15 @@ func initMetric(namespace string) error {
 	}
 
 	if err := prometheus.Register(globalMetric.mongoCommandSucceededMetric); err != nil {
-		return errors.InternalServer.Wrap(err)
+		return errors.Default.Wrap(err)
 	}
 
 	if err := prometheus.Register(globalMetric.mongoCommandFailedMetric); err != nil {
-		return errors.InternalServer.Wrap(err)
+		return errors.Default.Wrap(err)
 	}
 
 	if err := prometheus.Register(globalMetric.mongoPoolEventsMetric); err != nil {
-		return errors.InternalServer.Wrap(err)
+		return errors.Default.Wrap(err)
 	}
 
 	return nil

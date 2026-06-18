@@ -2,6 +2,7 @@ package slices
 
 import (
 	"fmt"
+
 	"pkg/errors"
 )
 
@@ -114,7 +115,7 @@ func First[T any](array []T) (value T, err error) {
 	// Если массив пустой
 	if len(array) == 0 {
 		// Возвращаем ошибку
-		return value, errors.ErrorType{HTTPCode: 404, LogAs: errors.LogAsWarning}.Wrap(ErrSliceIsEmpty).WithParams("Type", fmt.Sprintf("%T", value))
+		return value, errors.Default.Wrap(ErrSliceIsEmpty).WithParams("Type", fmt.Sprintf("%T", value))
 	}
 	// Возвращаем первый элемент массива
 	return array[0], nil
@@ -155,7 +156,7 @@ func Contains[T comparable](slice []T, value T) bool {
 	return false
 }
 
-// ContainsAll проверяет, содержатся ли все значения target в массиве slice, используя мапу для быстрого поиска.
+// ContainsAll проверяет, содержатся ли все значения target в массиве slice, используя мапу для быстрого поиска. Полное пересечение
 // Пример использования:
 // isPresent := slice.Contains([]int{1, 2, 3}, 1, 2)
 func ContainsAll[T comparable](slice []T, target ...T) bool {
@@ -174,6 +175,9 @@ func ContainsAll[T comparable](slice []T, target ...T) bool {
 	return true
 }
 
+// ContainsAny проверяет, содержится ли хоть одно значение target в массиве slice. Частичное пересечение
+// Пример использования:
+// isPresent := slice.ContainsAny([]int{1, 2, 3}, 1, 2)
 func ContainsAny[T comparable](slice []T, target ...T) bool {
 
 	sliceMap := GetMapValueStruct(slice, func(v T) T { return v })

@@ -20,6 +20,9 @@ type VASTRequest struct {
 	// Site
 	Domain *string `schema:"domain" json:"domain"`
 	UserID *string `schema:"uid" json:"uid"`
+
+	// Поддержка VPAID
+	VPAID *bool `schema:"vpaid" json:"vpaid,omitempty"`
 }
 
 func (v VASTRequest) Validate() error {

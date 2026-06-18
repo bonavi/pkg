@@ -1,8 +1,6 @@
 package openrtb
 
 import (
-	"encoding/json"
-
 	"pkg/pointer"
 )
 
@@ -45,7 +43,13 @@ type Inventory struct {
 	Keywords string `json:"keywords,omitempty" bson:"keywords"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
-	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`
+	Ext *InventoryExt `json:"ext,omitempty" bson:"ext"`
+}
+
+type InventoryExt struct{}
+
+func (i *InventoryExt) copy() InventoryExt {
+	return InventoryExt{}
 }
 
 func (i *Inventory) Copy() Inventory {
@@ -78,10 +82,9 @@ func (i *Inventory) Copy() Inventory {
 		content = pointer.Pointer(i.Content.Copy())
 	}
 
-	var ext []byte
-	if len(i.Ext) != 0 {
-		ext = make([]byte, len(i.Ext))
-		copy(ext, i.Ext)
+	var ext *InventoryExt
+	if i.Ext != nil {
+		ext = pointer.Pointer(i.Ext.copy())
 	}
 
 	return Inventory{

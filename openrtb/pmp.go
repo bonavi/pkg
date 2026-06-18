@@ -3,6 +3,7 @@ package openrtb
 import (
 	"encoding/json"
 	"errors"
+	"pkg/pointer"
 )
 
 // Validation errors.
@@ -23,7 +24,13 @@ type PMP struct {
 	Deals []Deal `json:"deals,omitempty" bson:"deals"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
-	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`
+	Ext *PMPExt `json:"ext,omitempty" bson:"ext"`
+}
+
+type PMPExt struct{}
+
+func (p *PMPExt) copy() PMPExt {
+	return PMPExt{}
 }
 
 func (p *PMP) Copy() PMP {
@@ -36,10 +43,9 @@ func (p *PMP) Copy() PMP {
 		}
 	}
 
-	var ext []byte
-	if len(p.Ext) != 0 {
-		ext = make([]byte, len(p.Ext))
-		copy(ext, p.Ext)
+	var ext *PMPExt
+	if p.Ext != nil {
+		ext = pointer.Pointer(p.Ext.copy())
 	}
 
 	return PMP{
@@ -84,8 +90,12 @@ type Deal struct {
 	AdvDomains []string `json:"wadomain,omitempty" bson:"wadomain"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
-	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`
+	Ext *DealExt `json:"ext,omitempty" bson:"ext"`
 }
+
+type DealExt struct{}
+
+func (d *DealExt) copy() DealExt { return DealExt{} }
 
 // Validate the PMP object.
 func (p *PMP) Validate() error {
@@ -132,10 +142,9 @@ func (d *Deal) Copy() Deal {
 		copy(advDomains, d.AdvDomains)
 	}
 
-	var ext []byte
-	if len(d.Ext) != 0 {
-		ext = make([]byte, len(d.Ext))
-		copy(ext, d.Ext)
+	var ext *DealExt
+	if d.Ext != nil {
+		ext = pointer.Pointer(d.Ext.copy())
 	}
 
 	return Deal{

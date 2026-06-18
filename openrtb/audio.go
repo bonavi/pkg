@@ -3,6 +3,7 @@ package openrtb
 import (
 	"encoding/json"
 	"errors"
+	"pkg/pointer"
 )
 
 // Validation errors.
@@ -93,7 +94,13 @@ type Audio struct {
 	VolumeNorm int `json:"nvol,omitempty" bson:"nvol"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
-	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`
+	Ext *AudioExt `json:"ext,omitempty" bson:"ext"`
+}
+
+type AudioExt struct{}
+
+func (a *AudioExt) copy() AudioExt {
+	return AudioExt{}
 }
 
 type jsonAudio Audio
@@ -169,10 +176,9 @@ func (a *Audio) Copy() Audio {
 		copy(companionTypes, a.CompanionTypes)
 	}
 
-	var ext []byte
-	if len(a.Ext) != 0 {
-		ext = make([]byte, len(a.Ext))
-		copy(ext, a.Ext)
+	var ext *AudioExt
+	if a.Ext != nil {
+		ext = pointer.Pointer(a.Ext.copy())
 	}
 
 	return Audio{

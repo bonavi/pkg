@@ -1,8 +1,6 @@
 package openrtb
 
 import (
-	"encoding/json"
-
 	"pkg/pointer"
 )
 
@@ -102,7 +100,13 @@ type Content struct {
 	Data []Data `json:"data,omitempty" bson:"data"`
 
 	// Placeholder for exchange-specific extensions to OpenRTB.
-	Ext json.RawMessage `json:"ext,omitempty" bson:"ext"`
+	Ext *ContentExt `json:"ext,omitempty" bson:"ext"`
+}
+
+type ContentExt struct{}
+
+func (d *ContentExt) copy() ContentExt {
+	return ContentExt{}
 }
 
 func (c *Content) Copy() Content {
@@ -126,10 +130,9 @@ func (c *Content) Copy() Content {
 		}
 	}
 
-	var ext []byte
-	if len(c.Ext) != 0 {
-		ext = make([]byte, len(c.Ext))
-		copy(ext, c.Ext)
+	var ext *ContentExt
+	if c.Ext != nil {
+		ext = pointer.Pointer(c.Ext.copy())
 	}
 
 	return Content{
