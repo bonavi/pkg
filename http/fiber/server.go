@@ -3,14 +3,11 @@ package fiber
 import (
 	"time"
 
+	"pkg/contextKeys"
+
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/adaptor"
-	"github.com/gofiber/fiber/v2/middleware/healthcheck"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
-	"pkg/contextKeys"
 )
 
 func GetDefaultServer(
@@ -83,15 +80,6 @@ func GetDefaultServer(
 		EnableStackTrace:  true,
 		StackTraceHandler: RecoverHandler,
 	}))
-	app.Use(healthcheck.New(healthcheck.Config{
-		Next:              nil,
-		LivenessProbe:     nil,
-		LivenessEndpoint:  "",
-		ReadinessProbe:    NewReadyHandler(readyIndicator),
-		ReadinessEndpoint: "",
-	}))
-
-	app.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
 
 	return app, nil
 }
