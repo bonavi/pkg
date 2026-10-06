@@ -13,9 +13,12 @@ type ErrorType struct {
 type Error struct {
 
 	// Тип ошибки, в который зашиты данные от разработчика
-	// В случае, если этот тип снова кладется в errors.Type.Wrap, эта переменная затирается
-	// Оставить первоначатльный тип ошибки можно через errors.DontEraseErrorType()
+	// В случае, если этот тип снова кладется в errors.Type.Wrap, эта переменная затирается (кроме Default.Wrap)
+	// Оставить первоначальный тип ошибки можно через err.DontEraseErrorType()
 	ErrorType ErrorType `json:"-"`
+
+	// Тип зафиксирован через DontEraseErrorType: следующие Wrap его не перезапишут
+	isErrorTypeLocked bool
 
 	// Первоначальная ошибка. Если необходимо завернуть эту ошибку через fmt.Errorf("%w", err), то
 	// Необходимо воспользоваться errors.WithAdditionalError(ErrNotFound)

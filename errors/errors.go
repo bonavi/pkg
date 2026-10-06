@@ -56,7 +56,17 @@ func (typ ErrorType) Wrap(err error) Error {
 
 	if As(err, &customErr) { // Если это уже обернутая ошибка
 
-		// Возвращаем ее
+		// Перезаписываем тип, если он не зафиксирован. Default означает «тип неизвестен» —
+		// им нельзя затирать уже осмысленный тип
+		if !customErr.isErrorTypeLocked && typ != Default {
+
+			// Шаблонный текст для пользователя меняем вместе с типом, кастомный — сохраняем
+			if customErr.HumanText == customErr.ErrorType.HumanText {
+				customErr.HumanText = typ.HumanText
+			}
+			customErr.ErrorType = typ
+		}
+
 		return customErr
 
 	} else { // Если это не обернутая ошибка
