@@ -96,3 +96,9 @@ func (e Error) WithAdditionalError(err error) Error {
 
 	return e
 }
+
+// DontEraseErrorType фиксирует тип ошибки: следующие errors.Type.Wrap его не перезапишут
+func (e Error) DontEraseErrorType() Error {
+	e.isErrorTypeLocked = true
+	return e
+}
