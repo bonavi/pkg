@@ -14,6 +14,8 @@ type Log struct {
 	content    any
 	params     map[string]any
 	stackTrace []string
+	traceID    string // ID трейса активного спана из контекста (пусто без трейсинга)
+	spanID     string // ID активного спана из контекста
 }
 
 // loggerSettings - конфигурация логгера

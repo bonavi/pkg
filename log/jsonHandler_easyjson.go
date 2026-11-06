@@ -92,6 +92,10 @@ func easyjson65a741d4DecodePkgLog(in *jlexer.Lexer, out *jsonLog) {
 			}
 		case "systemInfo":
 			easyjson65a741d4DecodePkgLogModel(in, &out.SystemInfo)
+		case "traceID":
+			out.TraceID = string(in.String())
+		case "spanID":
+			out.SpanID = string(in.String())
 		default:
 			in.SkipRecursive()
 		}
@@ -161,6 +165,16 @@ func easyjson65a741d4EncodePkgLog(out *jwriter.Writer, in jsonLog) {
 		const prefix string = ",\"systemInfo\":"
 		out.RawString(prefix)
 		easyjson65a741d4EncodePkgLogModel(out, in.SystemInfo)
+	}
+	if in.TraceID != "" {
+		const prefix string = ",\"traceID\":"
+		out.RawString(prefix)
+		out.String(string(in.TraceID))
+	}
+	if in.SpanID != "" {
+		const prefix string = ",\"spanID\":"
+		out.RawString(prefix)
+		out.String(string(in.SpanID))
 	}
 	out.RawByte('}')
 }
