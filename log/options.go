@@ -6,9 +6,17 @@ import (
 	"maps"
 	"pkg/contextMap"
 	"pkg/errors"
+
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (l Log) WithContextParams(ctx context.Context) Log {
+
+	// Привязываем лог к активному спану: по traceID из лога можно перейти в трейс
+	if spanContext := trace.SpanContextFromContext(ctx); spanContext.IsValid() {
+		l.traceID = spanContext.TraceID().String()
+		l.spanID = spanContext.SpanID().String()
+	}
 
 	// Получаем параметры из контекста
 	contextParams := contextMap.GetMap(ctx)

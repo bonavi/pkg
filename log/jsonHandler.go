@@ -24,6 +24,8 @@ type jsonLog struct {
 	StackTrace []string         `json:"stackTrace"`
 	Params     map[string]any   `json:"params,omitempty"`
 	SystemInfo model.SystemInfo `json:"systemInfo"`
+	TraceID    string           `json:"traceID,omitempty"` // ID трейса, если лог записан в контексте спана
+	SpanID     string           `json:"spanID,omitempty"`  // ID спана
 }
 
 var _ Handler = new(JSONHandler)
@@ -85,6 +87,8 @@ func (h *JSONHandler) handle(log Log) {
 			StackTrace: customErr.StackTrace,
 			Params:     maps.Join(log.params, customErr.Params),
 			SystemInfo: logger.systemInfo,
+			TraceID:    log.traceID,
+			SpanID:     log.spanID,
 		}
 	default:
 		logStruct = jsonLog{
@@ -93,6 +97,8 @@ func (h *JSONHandler) handle(log Log) {
 			StackTrace: stackTrace.GetStackTrace(errors.SkipPreviousCaller),
 			Params:     log.params,
 			SystemInfo: logger.systemInfo,
+			TraceID:    log.traceID,
+			SpanID:     log.spanID,
 		}
 	}
 
